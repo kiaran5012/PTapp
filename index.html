@@ -1,19 +1,19 @@
 <!-- 
   Pressure Tracker Web App
-  Version: 20.3 (Rise Tooltip Color Fix)
-  Description: ライトモードにおける上昇警戒ツールチップの配色ミスを修正。
+  Version: 21.3 (Skeleton Shimmer Fix)
+  Description: ダークモードでのローディングアニメーション修正。
   Update: 
-    - RISE ゾーンの ttBg (Light Mode) を深い青から明るい透過ブルー (rgba(191, 219, 254, 0.85)) に修正。
-    - v20.2 の AIアドバイス拡大UI（余白削減、テキスト色強制修正）を完全維持。
-    - v20.0 のアイコン修正（太陽・更新ボタン）を維持。
-    - 安定したイージング追従と正確な時刻表示を継承。
+    - .dark .skeleton-shimmer の background 指定を background-image に修正。
+    - background-size がリセットされる現象を防止し、ダークモードでもシマーアニメーションを有効化。
+    - v21.2 の視覚バランス（ライトモードのメモリ線濃度、0時線回避、上昇警戒色）を完全維持。
+    - スマホでの低速ツールチップ・高速スクロール、正確な時刻書式を堅持。
 -->
 <!DOCTYPE html>
 <html lang="ja" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>気圧トラッカー v20.3</title>
+    <title>気圧トラッカー v21.3</title>
     
     <meta name="theme-color" content="#f0f9ff">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -107,7 +107,6 @@
         .modal-content { transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .modal-overlay.active .modal-content { transform: scale(1); }
 
-        /* Dashboard Mode Modal Scale */
         body.mode-dashboard #aiExpandModal .modal-content { max-width: 90vw; width: 95%; }
 
         .chart-view-wrapper {
@@ -124,10 +123,12 @@
 
         .skeleton-shimmer {
             background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
-            background-size: 200% 100%; animation: shimmer 2s infinite;
+            background-size: 200% 100%; animation: shimmer 2s linear infinite;
             position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10;
         }
-        .dark .skeleton-shimmer { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); }
+        /* 修正：ショートハンドを使わず背景画像のみ指定することで background-size を保持 */
+        .dark .skeleton-shimmer { background-image: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); }
+        
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         canvas#pressureChart { opacity: 0; transition: opacity 0.5s ease-in-out; }
         canvas#pressureChart.ready { opacity: 1; }
@@ -145,7 +146,6 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.2); border-radius: 10px; }
 
-        /* Markdown Text Polish for Dark Mode */
         .markdown-body h1, .markdown-body h2, .markdown-body h3 { font-weight: bold; color: #1e3a8a; margin-top: 0.5rem; margin-bottom: 0.25rem; }
         .dark .markdown-body h1, .dark .markdown-body h2, .dark .markdown-body h3 { color: #93c5fd !important; }
         .dark .markdown-body, .dark .markdown-body * { color: #e2e8f0; }
@@ -170,7 +170,7 @@
             <div class="space-y-4">
                 <input type="text" id="cityInput" placeholder="都市名を入力" class="w-full px-4 py-3 rounded-xl border border-blue-100 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-200 focus:outline-none">
                 <div class="flex gap-2">
-                    <button onclick="App.ui.closeModal()" class="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 font-bold">キャンセル</button>
+                    <button onclick="App.ui.closeModal()" class="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 font-bold hover:bg-gray-200 transition-all">キャンセル</button>
                     <button id="searchBtn" onclick="App.actions.searchCity()" class="flex-1 px-4 py-3 rounded-xl bg-blue-600 text-white font-bold flex items-center justify-center gap-2">
                         <span id="searchBtnText">検索</span>
                         <div id="searchBtnLoader" class="loader hidden" style="width:14px; height:14px; border-width:2px;"></div>
@@ -197,7 +197,7 @@
     <div id="mainContainer" class="w-full max-w-[1800px] lg:max-w-[99%] flex flex-col mx-auto relative">
         <header id="appHeader" class="relative mb-4 lg:mb-3 text-center flex-shrink-0">
             <h1 class="text-2xl min-[1200px]:text-3xl font-bold text-blue-900 dark:text-blue-400 tracking-tight">
-                気圧トラッカー <span class="text-blue-600 dark:text-blue-300 text-sm font-medium align-middle ml-1">v20.3</span>
+                気圧トラッカー <span class="text-blue-600 dark:text-blue-300 text-sm font-medium align-middle ml-1">v21.3</span>
             </h1>
             
             <button onclick="App.actions.toggleTheme()" class="absolute right-0 top-1/2 -translate-y-1/2 p-2 rounded-full glass-card hover:bg-blue-50 dark:hover:bg-slate-700 z-10 transition-all text-blue-600 dark:text-yellow-400">
@@ -210,7 +210,7 @@
         </header>
 
         <div id="dashboardGrid" class="flex flex-col gap-4 flex-1 min-h-0 transition-all duration-300">
-            <!-- (1) Metrics Summary -->
+            <!-- Summary Info -->
             <div id="infoGrid" class="grid grid-cols-1 md:grid-cols-3 gap-3 flex-shrink-0">
                 <div onclick="App.ui.openModal()" class="info-box glass-card rounded-2xl p-3 text-center border border-blue-200 clickable-box group hover:bg-blue-50 dark:hover:bg-slate-700 transition-all">
                     <p class="text-[10px] text-gray-400 dark:text-slate-500 font-bold mb-0.5 uppercase tracking-wider group-hover:text-blue-500 flex items-center justify-center gap-1">観測地点 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></p>
@@ -226,7 +226,7 @@
                 </div>
             </div>
 
-            <!-- (2) Main Graph Card -->
+            <!-- Graph Area -->
             <div id="graphCard" class="glass-card rounded-3xl overflow-hidden p-2 lg:p-4 flex-1 flex flex-col min-h-[380px] lg:min-h-0">
                 <div class="chart-view-wrapper flex-1" id="chartWrapper">
                     <div id="scrollContainer" class="scrollable-chart-container">
@@ -242,7 +242,7 @@
                 </div>
             </div>
 
-            <!-- (3) Legend Panel -->
+            <!-- Legend Grid -->
             <div id="legendGrid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-2 flex-shrink-0">
                 <div class="rounded-xl p-2 border border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-900/20 flex items-center gap-1.5 shadow-sm">
                     <span class="text-xl dark:drop-shadow-[0_0_6px_rgba(255,255,255,0.7)]">💣</span>
@@ -262,7 +262,7 @@
                 </div>
             </div>
 
-            <!-- (4) AI Insights Section -->
+            <!-- AI Advice -->
             <div id="aiSection" class="ai-glow rounded-3xl p-4 shadow-sm border border-blue-100 flex flex-col min-h-[200px] lg:min-h-0 overflow-hidden">
                 <div class="flex items-center mb-3 flex-shrink-0">
                     <div class="flex items-center gap-2 flex-1">
@@ -274,7 +274,7 @@
                 <div id="aiResult" class="markdown-body text-xs lg:text-sm text-gray-700 dark:text-slate-300 leading-relaxed overflow-y-auto pr-1 flex-1 custom-scrollbar"><p class="text-gray-400 italic text-center py-4">分析ボタンを押して最新の助言を確認してください。</p></div>
             </div>
 
-            <!-- (5) System Status Bar -->
+            <!-- System Status Bar -->
             <div id="statusCard" class="glass-card rounded-2xl p-3 border border-blue-100/30 dark:border-slate-700 flex-shrink-0">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
@@ -309,23 +309,21 @@
                 ASPECT_RATIO_MIN: 1.3, ASPECT_RATIO_MAX: 2.3, MOBILE_WIDTH_THRESHOLD: 768
             },
             ZONES: {
-                // ライトモード用 ttBg, ダークモード用 ttDarkBg。RISE(上昇警戒)を明るいブルー (0.85) に修正。
-                WARNING: { threshold: -1.0, icon: "💣", label: "警戒", bg: "rgba(254, 226, 226, 0.75)", darkBg: "rgba(153, 27, 27, 0.4)", ttBg: "rgba(252, 165, 165, 0.85)", ttDarkBg: "rgba(80, 15, 15, 0.85)", border: "#ef4444", text: "#7f1d1d", darkText: "#fecaca" },
-                CAUTION: { threshold: -0.5, icon: "⚠️", label: "注意", bg: "rgba(255, 237, 213, 0.75)", darkBg: "rgba(154, 52, 18, 0.4)", ttBg: "rgba(255, 237, 213, 0.85)", ttDarkBg: "rgba(80, 25, 10, 0.85)", border: "#f97316", text: "#7c2d12", darkText: "#fed7aa" },
-                SLIGHT:  { threshold: -0.3, icon: "🔶", label: "やや注意", bg: "rgba(254, 249, 195, 0.75)", darkBg: "rgba(133, 77, 14, 0.4)", ttBg: "rgba(254, 249, 195, 0.85)", ttDarkBg: "rgba(70, 45, 10, 0.85)", border: "#ca8a04", text: "#713f12", darkText: "#fef08a" },
-                // 修正箇所: RISE ゾーンの ttBg を明るいブルーに戻した
-                RISE:    { threshold: 0.5,  icon: "🚀", label: "上昇警戒", bg: "rgba(219, 234, 254, 0.75)", darkBg: "rgba(30, 58, 138, 0.4)", ttBg: "rgba(191, 219, 254, 0.85)", ttDarkBg: "rgba(15, 30, 80, 0.85)", border: "#3b82f6", text: "#1e3a8a", darkText: "#bfdbfe" },
-                DEFAULT: { icon: "", label: "", bg: "transparent", darkBg: "transparent", ttBg: "rgba(241, 245, 249, 0.85)", ttDarkBg: "rgba(15, 23, 42, 0.85)", border: "#64748b", text: "#1e293b", darkText: "#94a3b8" }
+                WARNING: { threshold: -1.0, icon: "💣", label: "警戒", bg: "rgba(254, 226, 226, 0.75)", darkBg: "rgba(153, 27, 27, 0.4)", ttBg: "rgba(252, 165, 165, 0.98)", ttDarkBg: "rgba(80, 15, 15, 0.85)", border: "#ef4444", text: "#7f1d1d", darkText: "#fecaca" },
+                CAUTION: { threshold: -0.5, icon: "⚠️", label: "注意", bg: "rgba(255, 237, 213, 0.75)", darkBg: "rgba(154, 52, 18, 0.4)", ttBg: "rgba(253, 186, 116, 0.98)", ttDarkBg: "rgba(80, 25, 10, 0.85)", border: "#f97316", text: "#7c2d12", darkText: "#fed7aa" },
+                SLIGHT:  { threshold: -0.3, icon: "🔶", label: "やや注意", bg: "rgba(254, 249, 195, 0.75)", darkBg: "rgba(133, 77, 14, 0.4)", ttBg: "rgba(254, 249, 195, 0.98)", ttDarkBg: "rgba(70, 45, 10, 0.85)", border: "#ca8a04", text: "#713f12", darkText: "#fef08a" },
+                RISE:    { threshold: 0.5,  icon: "🚀", label: "上昇警戒", bg: "rgba(219, 234, 254, 0.75)", darkBg: "rgba(30, 58, 138, 0.4)", ttBg: "rgba(191, 219, 254, 0.98)", ttDarkBg: "rgba(15, 30, 80, 0.85)", border: "#3b82f6", text: "#1e3a8a", darkText: "#bfdbfe" },
+                DEFAULT: { icon: "", label: "", bg: "transparent", darkBg: "transparent", ttBg: "rgba(241, 245, 249, 0.98)", ttDarkBg: "rgba(15, 23, 42, 0.85)", border: "#64748b", text: "#1e293b", darkText: "#94a3b8" }
             },
             DARK_STYLE: { ZEBRA: "rgba(255, 255, 255, 0.04)" }
         };
 
-        /** --- II. CORE OBJECT --- */
+        /** --- II. CORE APPLICATION OBJECT --- */
         const App = {
             state: {
                 lat: 35.6895, lon: 139.6917, locationName: "東京都", locationResolved: false,
                 times: [], pressures: [], nowIndex: 0, chart: null, isDashboardMode: false,
-                isRefreshing: false, aiResponseMarkdown: "", isDark: false,
+                isRefreshing: false, aiResponseMarkdown: "", isDark: false, isScroll: false,
                 tracker: { active: false, targetX: 0, targetY: 0, lastIdx: 0, curX: null, curY: null },
                 touch: { startX: 0, startTime: 0, lastX: 0, lastTime: 0, velocity: 0, scrollStart: 0, isDown: false }
             },
@@ -359,8 +357,11 @@
                     return APP_CONFIG.ZONES.DEFAULT;
                 },
                 formatDate(date) { 
-                    const h = date.getHours().toString().padStart(2,'0'), m = date.getMinutes().toString().padStart(2,'0');
-                    return `${date.getMonth()+1}/${date.getDate()} ${h}:${m}`; 
+                    const m = (date.getMonth() + 1).toString();
+                    const d = date.getDate().toString();
+                    const hh = date.getHours().toString().padStart(2, '0');
+                    const mm = date.getMinutes().toString().padStart(2, '0');
+                    return `${m}/${d} ${hh}:${mm}`; 
                 }
             },
 
@@ -383,10 +384,7 @@
                     if (statusText) statusText.innerText = msg; if (statusIcon) statusIcon.classList.toggle('hidden', !isLoading);
                     if (skeleton && canvas) { 
                         if (isLoading && App.state.times.length === 0) { skeleton.classList.remove('hidden'); canvas.classList.remove('ready'); }
-                        else if (!isLoading) { 
-                            skeleton.classList.add('hidden'); 
-                            canvas.classList.add('ready'); 
-                        } 
+                        else if (!isLoading) { skeleton.classList.add('hidden'); canvas.classList.add('ready'); } 
                     }
                 },
                 updateAddressUI(name) { const el = document.getElementById('locationCoord'); el.innerText = name; const len = name.length; el.classList.remove('text-2xl', 'text-xl', 'text-lg', 'text-base'); if (len <= 6) el.classList.add('text-xl'); else if (len <= 9) el.classList.add('text-lg'); else el.classList.add('text-base'); },
@@ -398,7 +396,9 @@
                     const ratio = window.innerWidth / window.innerHeight;
                     const isDashboard = ratio >= APP_CONFIG.LAYOUT.ASPECT_RATIO_MIN && ratio <= APP_CONFIG.LAYOUT.ASPECT_RATIO_MAX;
                     App.state.isDashboardMode = isDashboard;
+                    
                     const body = document.body, container = document.getElementById('mainContainer'), grid = document.getElementById('dashboardGrid'), info = document.getElementById('infoGrid'), graph = document.getElementById('graphCard'), legend = document.getElementById('legendGrid'), ai = document.getElementById('aiSection'), status = document.getElementById('statusCard');
+                    
                     if (isDashboard) {
                         body.classList.add('mode-dashboard'); container.classList.add('h-screen', 'lg:max-h-[calc(100vh-2rem)]');
                         grid.style.display = 'grid'; grid.style.gridTemplateColumns = 'repeat(12, 1fr)'; grid.style.gridTemplateRows = 'auto auto 1fr auto'; 
@@ -420,9 +420,42 @@
                     slider.onmousedown = (e) => { if (!App.state.isScroll) return; App.state.touch.isDown = true; App.state.touch.startX = e.pageX - slider.offsetLeft; App.state.touch.scrollStart = slider.scrollLeft; };
                     slider.onmouseleave = slider.onmouseup = () => App.state.touch.isDown = false;
                     slider.onmousemove = (e) => { if (!App.state.touch.isDown || !App.state.isScroll) return; slider.scrollLeft = App.state.touch.scrollStart - (e.pageX - slider.offsetLeft - App.state.touch.startX) * 1.5; };
-                    slider.addEventListener('touchstart', (e) => { if (!App.state.isScroll) return; const t = e.touches[0]; App.state.touch.startX = t.pageX; App.state.touch.scrollStart = slider.scrollLeft; }, { passive: true });
-                    slider.addEventListener('touchmove', (e) => { if (!App.state.isScroll) return; const t = e.touches[0]; slider.scrollLeft = App.state.touch.scrollStart - (t.pageX - App.state.touch.startX); if (App.state.chart) App.state.chart.canvas.dispatchEvent(new MouseEvent('mousemove', { clientX: t.clientX, clientY: t.clientY, bubbles: true })); }, { passive: false });
+                    
+                    slider.addEventListener('touchstart', (e) => { 
+                        if (!App.state.isScroll) return; 
+                        const t = e.touches[0];
+                        App.state.touch.startX = t.pageX;
+                        App.state.touch.startTime = Date.now();
+                        App.state.touch.lastX = t.pageX;
+                        App.state.touch.lastTime = Date.now();
+                        App.state.touch.scrollStart = slider.scrollLeft;
+                    }, { passive: true });
+
+                    slider.addEventListener('touchmove', (e) => {
+                        if (!App.state.isScroll) return;
+                        const t = e.touches[0];
+                        const now = Date.now();
+                        const dt = now - App.state.touch.lastTime;
+                        const dx = t.pageX - App.state.touch.lastX;
+                        const velocity = Math.abs(dx / (dt || 1)) || 0;
+
+                        App.state.touch.lastX = t.pageX;
+                        App.state.touch.lastTime = now;
+
+                        if (velocity < APP_CONFIG.LAYOUT.SCROLL_VELOCITY_THRESHOLD) {
+                            if (App.state.chart) {
+                                App.state.chart.canvas.dispatchEvent(new MouseEvent('mousemove', {
+                                    clientX: t.clientX, clientY: t.clientY, bubbles: true
+                                }));
+                            }
+                            if (e.cancelable) e.preventDefault(); 
+                        } else {
+                            slider.scrollLeft = App.state.touch.scrollStart - (t.pageX - App.state.touch.startX);
+                        }
+                    }, { passive: false });
+
                     slider.addEventListener('scroll', () => { if(App.state.chart) App.state.chart.draw(); });
+
                     let ptrStart = 0;
                     window.addEventListener('touchstart', (e) => { if (window.scrollY === 0) ptrStart = e.touches[0].pageY; }, { passive: true });
                     window.addEventListener('touchmove', (e) => { if (ptrStart === 0 || App.state.isRefreshing) return; const diff = (e.touches[0].pageY - ptrStart) * 0.4; if (diff > 0) { const ind = document.getElementById('ptr-indicator'), icon = document.getElementById('ptr-icon'); ind.style.transform = `translate(-50%, ${Math.min(diff, 100)}px)`; icon.style.transform = `rotate(${diff * 4}deg)`; icon.style.color = diff >= APP_CONFIG.LAYOUT.PTR_THRESHOLD ? '#ef4444' : '#3b82f6'; } }, { passive: true });
@@ -436,8 +469,7 @@
                 setTheme(isDark) {
                     App.state.isDark = isDark;
                     document.documentElement.classList.toggle('dark', isDark); document.body.classList.toggle('dark', isDark);
-                    document.getElementById('themeIconSun').classList.toggle('hidden', !isDark); 
-                    document.getElementById('themeIconMoon').classList.toggle('hidden', isDark);
+                    document.getElementById('themeIconSun').classList.toggle('hidden', !isDark); document.getElementById('themeIconMoon').classList.toggle('hidden', isDark);
                     this.updateSummary(); if (App.state.chart) this.render();
                 },
                 async manualRefresh() {
@@ -499,31 +531,45 @@
                             data: App.state.pressures, borderColor: isDark ? '#60a5fa' : '#3b82f6', borderWidth: 2.5, tension: 0.3, fill: false, 
                             pointRadius: (c) => c.dataIndex === App.state.nowIndex ? 6 : 0, pointBackgroundColor: '#ef4444',
                             pointBorderColor: isDark ? '#fff' : '#ef4444', pointBorderWidth: isDark ? 2 : 0,
-                            pointHoverRadius: 0, pointHoverBorderWidth: 0, pointHitRadius: 10
+                            pointHoverRadius: 0, pointHitRadius: 10
                         }] },
                         options: {
                             responsive: true, maintainAspectRatio: false, layout: { padding: { bottom: APP_CONFIG.LAYOUT.BOTTOM_PADDING, top: APP_CONFIG.LAYOUT.TOP_PADDING, left: APP_CONFIG.LAYOUT.SIDE_PADDING, right: APP_CONFIG.LAYOUT.SIDE_PADDING } }, interaction: { intersect: false, mode: 'index' },
                             onHover: (e, els) => { if (els.length) { App.state.tracker.targetX = els[0].element.x; App.state.tracker.targetY = els[0].element.y; App.state.tracker.lastIdx = els[0].index; App.state.tracker.active = true; } else App.state.tracker.active = false; },
-                            hover: { animationDuration: 0 },
                             scales: { 
                                 x: { 
-                                    grid: { color: (c) => { if (!App.state.times[c.index]) return "transparent"; const h = App.state.times[c.index].getHours(); if (h === 0) return "transparent"; if (h === 12) return isDark ? "rgba(255,255,255,0.2)" : "rgba(100,116,139,0.4)"; return h % 3 === 0 ? (isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.1)") : "transparent"; }, drawBorder: false, drawTicks: false }, 
-                                    ticks: { autoSkip: false, maxRotation: 0, callback: (v, i) => (App.state.times[i] && App.state.times[i].getHours() % 6 === 0) ? App.state.times[i].getHours() : '', color: (c) => (App.state.times[c.index] && App.state.times[c.index].getHours()%12===0) ? (isDark ? "#cbd5e1" : "#1e293b") : "#94a3b8", font: { size: 18, weight: 'bold' } } 
+                                    grid: { color: (c) => { if (!App.state.times[c.index]) return "transparent"; const h = App.state.times[c.index].getHours(); if (h === 0) return "transparent"; if (h === 12) return isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)"; return h % 3 === 0 ? (isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.08)") : "transparent"; }, drawBorder: false, drawTicks: false }, 
+                                    ticks: { autoSkip: false, maxRotation: 0, minRotation: 0, callback: (v, i) => (App.state.times[i] && App.state.times[i].getHours() % 6 === 0) ? App.state.times[i].getHours() : '', color: (c) => (App.state.times[c.index] && App.state.times[c.index].getHours()%12===0) ? (isDark ? "#cbd5e1" : "#1e293b") : "#94a3b8", font: { size: 16, weight: 'bold' } } 
                                 }, y: { display: false } 
                             },
                             plugins: { 
                                 legend: { display: false }, 
                                 tooltip: { 
                                     enabled: true,
-                                    backgroundColor: (c) => {
-                                        const zone = App.utils.getZone(c.tooltipItems?.[0]?.dataIndex ?? 0, App.state.pressures);
+                                    backgroundColor: (ctx) => {
+                                        const item = ctx.tooltipItems?.[0];
+                                        const zone = item ? App.utils.getZone(item.dataIndex, App.state.pressures) : APP_CONFIG.ZONES.DEFAULT;
                                         return isDark ? zone.ttDarkBg : zone.ttBg;
                                     }, 
-                                    titleColor: (c) => isDark ? App.utils.getZone(c.tooltipItems?.[0]?.dataIndex ?? 0, App.state.pressures).darkText : App.utils.getZone(c.tooltipItems?.[0]?.dataIndex ?? 0, App.state.pressures).text,
-                                    bodyColor: (c) => isDark ? App.utils.getZone(c.tooltipItems?.[0]?.dataIndex ?? 0, App.state.pressures).darkText : App.utils.getZone(c.tooltipItems?.[0]?.dataIndex ?? 0, App.state.pressures).text,
-                                    borderColor: (c) => App.utils.getZone(c.tooltipItems?.[0]?.dataIndex ?? 0, App.state.pressures).border,
-                                    borderWidth: 3, padding: 12, displayColors: false, titleFont: { size: 13, weight: 'bold' }, bodyFont: { size: 22, weight: 'bold' }, 
-                                    callbacks: { title: (c) => { const d = App.state.times[c[0].dataIndex]; return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:00`; }, label: (c) => `${App.utils.getZone(c.dataIndex, App.state.pressures).icon} ${c.parsed.y.toFixed(1)} hPa` } 
+                                    titleColor: (ctx) => {
+                                        const item = ctx.tooltipItems?.[0];
+                                        const zone = item ? App.utils.getZone(item.dataIndex, App.state.pressures) : APP_CONFIG.ZONES.DEFAULT;
+                                        return isDark ? zone.darkText : zone.text;
+                                    },
+                                    bodyColor: (ctx) => {
+                                        const item = ctx.tooltipItems?.[0];
+                                        const zone = item ? App.utils.getZone(item.dataIndex, App.state.pressures) : APP_CONFIG.ZONES.DEFAULT;
+                                        return isDark ? zone.darkText : zone.text;
+                                    },
+                                    borderColor: (ctx) => {
+                                        const item = ctx.tooltipItems?.[0];
+                                        return item ? App.utils.getZone(item.dataIndex, App.state.pressures).border : "#94a3b8";
+                                    },
+                                    borderWidth: 2, padding: 12, displayColors: false, titleFont: { weight: 'bold' }, bodyFont: { size: 20, weight: 'bold' }, 
+                                    callbacks: { 
+                                        title: (pts) => { if(!pts[0]) return ""; const d = App.state.times[pts[0].dataIndex]; return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:00`; }, 
+                                        label: (pt) => `${App.utils.getZone(pt.dataIndex, App.state.pressures).icon} ${pt.parsed.y.toFixed(1)} hPa` 
+                                    } 
                                 } 
                             }
                         }, plugins: [ App.chartPlugins.bg, App.chartPlugins.zones, App.chartPlugins.footer, App.chartPlugins.hover, App.chartPlugins.now ]
@@ -535,41 +581,47 @@
             chartPlugins: {
                 bg: { id: 'bg', beforeDraw: (chart) => { const { ctx, chartArea: { left, right, top, bottom }, scales: { y } } = chart; ctx.save(); ctx.beginPath(); ctx.rect(left, top, right - left, bottom - top); ctx.clip();
                     const isDark = App.state.isDark;
-                    for (let p = Math.ceil(y.max); p >= Math.floor(y.min) - 2; p -= 2) { const yT = y.getPixelForValue(p), yB = y.getPixelForValue(p - 2), idx = Math.round((Math.ceil(y.max) - p) / 2); ctx.fillStyle = (idx % 2 === 0) ? "transparent" : (isDark ? APP_CONFIG.DARK_STYLE.ZEBRA : "rgba(0,0,0,0.12)"); ctx.fillRect(left, yT, right - left, yB - yT); }
-                    ctx.strokeStyle = isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.15)"; ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
+                    for (let p = Math.ceil(y.max); p >= Math.floor(y.min) - 2; p -= 2) { const yT = y.getPixelForValue(p), yB = y.getPixelForValue(p - 2), idx = Math.round((Math.ceil(y.max) - p) / 2); ctx.fillStyle = (idx % 2 === 0) ? "transparent" : (isDark ? APP_CONFIG.DARK_STYLE.ZEBRA : "rgba(0,0,0,0.03)"); ctx.fillRect(left, yT, right - left, yB - yT); }
+                    ctx.strokeStyle = isDark ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.12)"; ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
                     for (let p = Math.floor(y.min); p <= Math.ceil(y.max); p++) { if (p % 5 === 0 && p % 10 !== 0) { const yP = y.getPixelForValue(p); ctx.beginPath(); ctx.moveTo(left, yP); ctx.lineTo(right, yP); ctx.stroke(); } }
                     ctx.setLineDash([]); ctx.restore(); 
                 } },
                 zones: { id: 'zones', beforeDraw: (chart) => { const { ctx, chartArea: { top, height }, scales: { x } } = chart; const isDark = App.state.isDark; ctx.save(); for (let i = 0; i < App.state.pressures.length - 3; i += 3) { const zone = App.utils.getZone(i, App.state.pressures); if (zone && zone.bg !== "transparent") { const x1 = x.getPixelForValue(i), x2 = x.getPixelForValue(i + 3); 
                     ctx.fillStyle = isDark ? zone.darkBg : zone.bg; ctx.fillRect(x1, top, x2 - x1, height); 
                     ctx.textAlign = 'center'; ctx.fillStyle = isDark ? zone.darkText : zone.text; 
-                    if (isDark) { ctx.shadowColor = "rgba(255, 255, 255, 0.8)"; ctx.shadowBlur = 6; }
-                    ctx.font = '16px serif'; ctx.fillText(zone.icon, x1 + (x2-x1)/2, top - 6); 
-                    ctx.shadowBlur = 0;
-                    ctx.font = 'bold 13px "Noto Sans JP"'; (zone.label || "").split('').forEach((c, idx) => ctx.fillText(c, x1 + (x2-x1)/2, top + 20 + idx * 14)); 
+                    ctx.font = '14px serif'; ctx.fillText(zone.icon, x1 + (x2-x1)/2, top - 6); 
+                    ctx.font = 'bold 12px "Noto Sans JP"'; (zone.label || "").split('').forEach((c, idx) => ctx.fillText(c, x1 + (x2-x1)/2, top + 20 + idx * 14)); 
                 } } ctx.restore(); } },
                 footer: {
                     id: 'footer', 
-                    afterDatasetsDraw: (chart) => { const { ctx, chartArea: { top, bottom }, scales: { x, y } } = chart; ctx.save(); const slider = document.getElementById('scrollContainer'), sL = slider ? slider.scrollLeft : 0; const textX = sL + APP_CONFIG.LAYOUT.SIDE_PADDING + 7; const isDark = App.state.isDark; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'left';
-                        ctx.strokeStyle = isDark ? "rgba(15, 23, 42, 0.9)" : "rgba(255, 255, 255, 0.9)"; ctx.lineWidth = 4;
+                    afterDatasetsDraw: (chart) => { const { ctx, chartArea: { top, bottom }, scales: { x, y } } = chart; ctx.save(); const slider = document.getElementById('scrollContainer'), sL = slider ? slider.scrollLeft : 0; const textX = sL + 22; const isDark = App.state.isDark; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'left';
+                        ctx.strokeStyle = isDark ? "#0f172a" : "#fff"; ctx.lineWidth = 4;
                         ctx.strokeText("hPa", textX, top - 6); ctx.fillStyle = isDark ? "#60a5fa" : "rgba(30, 58, 138, 1)"; ctx.fillText("hPa", textX, top - 6);
-                        for (let p = Math.floor(y.min); p <= Math.ceil(y.max); p++) { if (p % 5 === 0) { const yP = y.getPixelForValue(p); ctx.strokeStyle = isDark ? "rgba(15, 23, 42, 0.9)" : "rgba(255, 255, 255, 0.9)"; ctx.lineWidth = 4; ctx.strokeText(p, textX, yP - 5); ctx.fillStyle = isDark ? "#60a5fa" : "rgba(30, 58, 138, 1)"; ctx.fillText(p, textX, yP - 5); } } ctx.restore(); 
+                        for (let p = Math.floor(y.min); p <= Math.ceil(y.max); p++) { if (p % 5 === 0) { const yP = y.getPixelForValue(p); ctx.strokeText(p, textX, yP - 5); ctx.fillText(p, textX, yP - 5); } } ctx.restore(); 
                     },
-                    beforeDraw: (chart) => { const { ctx, chartArea: { top, bottom }, scales: { x } } = chart; ctx.save(); const isDark = App.state.isDark; App.state.times.forEach((date, i) => { if (date.getHours() === 0 && i !== 0) { const fX = x.getPixelForValue(i); ctx.beginPath(); ctx.strokeStyle = isDark ? "rgba(255, 255, 255, 0.2)" : "rgba(100, 116, 139, 0.5)"; ctx.lineWidth = 2.5; ctx.moveTo(fX, top); ctx.lineTo(fX, bottom); ctx.stroke(); } }); ctx.restore(); },
+                    beforeDraw: (chart) => { 
+                        const { ctx, chartArea: { top, bottom }, scales: { x } } = chart; ctx.save(); const isDark = App.state.isDark; 
+                        App.state.times.forEach((date, i) => { 
+                            if (date.getHours() === 0 && i !== 0) { 
+                                const fX = x.getPixelForValue(i); ctx.beginPath(); ctx.strokeStyle = isDark ? "rgba(255, 255, 255, 0.2)" : "rgba(100, 116, 139, 0.5)"; ctx.lineWidth = 2.5; 
+                                ctx.moveTo(fX, top); ctx.lineTo(fX, bottom); ctx.stroke(); 
+                            } 
+                        }); ctx.restore(); 
+                    },
                     afterDraw: (chart) => { const { ctx, chartArea: { bottom }, scales: { x } } = chart; ctx.save(); const groups = []; App.state.times.forEach((date, i) => { const s = `${date.getMonth()+1}/${date.getDate()}`; let g = groups.find(x => x.s === s); if (!g) { g = { s, idxs: [], date }; groups.push(g); } g.idxs.push(i); });
-                        groups.forEach(g => { const x1 = x.getPixelForValue(g.idxs[0]), x2 = x.getPixelForValue(g.idxs[g.idxs.length-1]); const label = `${g.s}(${['日','月','火','水','木','金','土'][g.date.getDay()]})`; ctx.font = `bold 18px sans-serif`; const textWidth = ctx.measureText(label).width;
-                            if (g.date.getHours() === 0 && g.idxs[0] !== 0) { ctx.beginPath(); ctx.strokeStyle = App.state.isDark ? "rgba(255,255,255,0.2)" : "rgba(100, 116, 139, 0.5)"; ctx.lineWidth = 2.5; ctx.moveTo(x1, bottom + 30); ctx.lineTo(x1, bottom + 52); ctx.stroke(); }
-                            if (x2 - x1 > textWidth + 10) { ctx.fillStyle = App.state.isDark ? "#94a3b8" : "#64748b"; ctx.textAlign = 'center'; ctx.fillText(label, (x1 + x2) / 2, bottom + 52); }
+                        groups.forEach(g => { const x1 = x.getPixelForValue(g.idxs[0]), x2 = x.getPixelForValue(g.idxs[g.idxs.length-1]); const label = `${g.s}(${['日','月','火','水','木','金','土'][g.date.getDay()]})`; ctx.font = `bold 16px sans-serif`; const textWidth = ctx.measureText(label).width;
+                            if (g.date.getHours() === 0 && g.idxs[0] !== 0) { ctx.beginPath(); ctx.strokeStyle = App.state.isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)"; ctx.lineWidth = 2.5; ctx.moveTo(x1, bottom + 30); ctx.lineTo(x1, bottom + 52); ctx.stroke(); }
+                            if (x2 - x1 > 60) { ctx.fillStyle = App.state.isDark ? "#94a3b8" : "#64748b"; ctx.textAlign = 'center'; ctx.fillText(label, (x1 + x2) / 2, bottom + 52); }
                         }); ctx.restore(); 
                     }
                 },
                 hover: { id: 'hover', afterDatasetsDraw: (chart) => { 
                     const t = App.state.tracker; if (!t.active) { t.curX = null; t.curY = null; return; }
-                    const { ctx } = chart; const isDark = App.state.isDark; if (t.curX === null) { t.curX = t.targetX; t.curY = t.targetY; }
+                    const { ctx } = chart; if (t.curX === null) { t.curX = t.targetX; t.curY = t.targetY; }
                     t.curX += (t.targetX - t.curX) * 0.2; t.curY += (t.targetY - t.curY) * 0.2;
                     if (Math.abs(t.targetX - t.curX) > 0.1) requestAnimationFrame(() => chart.draw());
                     ctx.save(); ctx.beginPath(); ctx.arc(t.curX, t.curY, 8, 0, Math.PI * 2); ctx.fillStyle = App.utils.getZone(t.lastIdx, App.state.pressures).border; 
-                    ctx.shadowBlur = isDark ? 15 : 10; ctx.shadowColor = isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.2)'; 
+                    ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(0,0,0,0.3)'; 
                     ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = '#fff'; ctx.stroke(); ctx.restore(); 
                 } },
                 now: { id: 'now', beforeDatasetsDraw: (chart) => { const { ctx, chartArea: { top, bottom }, scales: { x } } = chart; const xP = x.getPixelForValue(App.state.nowIndex); ctx.save(); ctx.beginPath(); ctx.setLineDash([4, 4]); ctx.strokeStyle = "#ef4444"; ctx.lineWidth = 1.5; ctx.moveTo(xP, top); ctx.lineTo(xP, bottom); ctx.stroke(); ctx.restore(); } }
