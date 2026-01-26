@@ -1,19 +1,19 @@
 <!-- 
   Pressure Tracker Web App
-  Version: 21.4 (Tooltip Time Diff Restored)
-  Description: v21.3をベースに、ツールチップ内での現在との時間差表記を復活。
+  Version: 21.6 (API Key Guidance Update)
+  Description: APIキー未設定時にAIアドバイス欄で設定を促す案内を表示。
   Update: 
-    - ツールチップのタイトルに現在時刻からの差分 (+XXh / -XXh) を追加。
-    - ダークモードでのローディングアニメーション修正 (v21.3) を維持。
-    - ライトモードのメモリ線濃度 (v21.2) と 0時線回避ロジックを堅持。
-    - スマホでの低速ツールチップ・高速スクロール、クリーンアイコンを継承。
+    - AIアドバイス欄の初期メッセージに「設定ボタンからAPIキーの入力が必要」な旨を追記。
+    - アプリ起動時にAPIキーの有無を確認し、未設定の場合は警告的な案内を優先表示。
+    - v21.5 までの視覚要素（0時線回避、メモリ線濃度、上昇警戒色、アイコン等）を完全維持。
+    - スマホでの高度ジェスチャー制御、正確な時刻書式を堅持。
 -->
 <!DOCTYPE html>
 <html lang="ja" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>気圧トラッカー v21.4</title>
+    <title>気圧トラッカー v21.6</title>
     
     <meta name="theme-color" content="#f0f9ff">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -180,6 +180,26 @@
         </div>
     </div>
 
+    <div id="settingsModal" class="modal-overlay" onclick="App.ui.closeSettingsModal()">
+        <div class="modal-content glass-card p-6 rounded-3xl w-[90%] max-w-sm shadow-2xl" onclick="event.stopPropagation()">
+            <h3 class="text-blue-900 dark:text-blue-400 font-bold mb-2 text-center text-lg">API設定</h3>
+            <p class="text-[10px] text-gray-400 dark:text-slate-500 text-center mb-4 leading-tight">AIアドバイスを利用するには Gemini API キーが必要です。<br><a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-500 underline">こちらから無料で取得できます。</a></p>
+            <div class="space-y-4">
+                <div class="relative">
+                    <input type="password" id="apiKeyInput" placeholder="Gemini API Key を入力" class="w-full px-4 py-3 rounded-xl border border-blue-100 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-200 focus:outline-none pr-10">
+                    <button onclick="App.ui.toggleApiKeyVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="App.ui.closeSettingsModal()" class="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 font-bold">キャンセル</button>
+                    <button onclick="App.actions.saveApiKey()" class="flex-1 px-4 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-all">保存</button>
+                </div>
+                <p class="text-[9px] text-gray-400 dark:text-slate-500 italic text-center">※キーはあなたのブラウザ内のみに保存され、サーバーへ送信されることはありません。</p>
+            </div>
+        </div>
+    </div>
+
     <div id="aiExpandModal" class="modal-overlay" onclick="App.ui.closeExpandModal()">
         <div class="modal-content glass-modal p-6 rounded-3xl w-[95%] max-h-[85vh] shadow-2xl flex flex-col" onclick="event.stopPropagation()">
             <div class="flex items-center justify-between mb-4 flex-shrink-0 text-blue-900 dark:text-blue-400">
@@ -195,11 +215,15 @@
     <!-- Main Container -->
     <div id="mainContainer" class="w-full max-w-[1800px] lg:max-w-[99%] flex flex-col mx-auto relative">
         <header id="appHeader" class="relative mb-4 lg:mb-3 text-center flex-shrink-0">
+            <button onclick="App.ui.openSettingsModal()" class="absolute left-0 top-1/2 -translate-y-1/2 p-2 rounded-full glass-card hover:bg-blue-50 dark:hover:bg-slate-700 z-10 transition-all text-blue-600 dark:text-slate-400" title="設定">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+
             <h1 class="text-2xl min-[1200px]:text-3xl font-bold text-blue-900 dark:text-blue-400 tracking-tight">
-                気圧トラッカー <span class="text-blue-600 dark:text-blue-300 text-sm font-medium align-middle ml-1">v21.4</span>
+                気圧トラッカー <span class="text-blue-600 dark:text-blue-300 text-sm font-medium align-middle ml-1">v21.6</span>
             </h1>
             
-            <button onclick="App.actions.toggleTheme()" class="absolute right-0 top-1/2 -translate-y-1/2 p-2 rounded-full glass-card hover:bg-blue-50 dark:hover:bg-slate-700 z-10 transition-all text-blue-600 dark:text-yellow-400">
+            <button onclick="App.actions.toggleTheme()" class="absolute right-0 top-1/2 -translate-y-1/2 p-2 rounded-full glass-card hover:bg-blue-50 dark:hover:bg-slate-700 z-10 transition-all text-blue-600 dark:text-yellow-400" title="テーマ切り替え">
                 <svg id="themeIconSun" class="hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="4"></circle>
                     <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
@@ -209,10 +233,9 @@
         </header>
 
         <div id="dashboardGrid" class="flex flex-col gap-4 flex-1 min-h-0 transition-all duration-300">
-            <!-- Summary Info -->
             <div id="infoGrid" class="grid grid-cols-1 md:grid-cols-3 gap-3 flex-shrink-0">
                 <div onclick="App.ui.openModal()" class="info-box glass-card rounded-2xl p-3 text-center border border-blue-200 clickable-box group hover:bg-blue-50 dark:hover:bg-slate-700 transition-all">
-                    <p class="text-[10px] text-gray-400 dark:text-slate-500 font-bold mb-0.5 uppercase tracking-wider group-hover:text-blue-500 flex items-center justify-center gap-1">観測地点 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></p>
+                    <p class="text-[10px] text-gray-400 dark:text-slate-500 font-bold mb-0.5 uppercase tracking-wider group-hover:text-blue-500 flex items-center justify-center gap-1 text-[10px]">観測地点 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></p>
                     <div id="locationCoord" class="text-lg lg:text-xl font-bold text-blue-900 dark:text-slate-200 truncate">取得中...</div>
                 </div>
                 <div class="info-box glass-card rounded-2xl p-3 text-center border border-blue-100">
@@ -225,7 +248,6 @@
                 </div>
             </div>
 
-            <!-- Graph Area -->
             <div id="graphCard" class="glass-card rounded-3xl overflow-hidden p-2 lg:p-4 flex-1 flex flex-col min-h-[380px] lg:min-h-0">
                 <div class="chart-view-wrapper flex-1" id="chartWrapper">
                     <div id="scrollContainer" class="scrollable-chart-container">
@@ -241,7 +263,6 @@
                 </div>
             </div>
 
-            <!-- Legend Grid -->
             <div id="legendGrid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-2 flex-shrink-0">
                 <div class="rounded-xl p-2 border border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-900/20 flex items-center gap-1.5 shadow-sm">
                     <span class="text-xl dark:drop-shadow-[0_0_6px_rgba(255,255,255,0.7)]">💣</span>
@@ -261,7 +282,7 @@
                 </div>
             </div>
 
-            <!-- AI Advice -->
+            <!-- AI Advice Panel -->
             <div id="aiSection" class="ai-glow rounded-3xl p-4 shadow-sm border border-blue-100 flex flex-col min-h-[200px] lg:min-h-0 overflow-hidden">
                 <div class="flex items-center mb-3 flex-shrink-0">
                     <div class="flex items-center gap-2 flex-1">
@@ -270,10 +291,12 @@
                     <button id="aiExpandBtn" onclick="App.ui.openExpandModal()" class="hidden mr-2 p-1.5 bg-blue-50 dark:bg-slate-700 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 transition-all shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg></button>
                     <button id="aiConsultBtn" onclick="App.actions.consultAI()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-xl transition-all text-[10px] font-bold shadow-sm disabled:opacity-50">分析</button>
                 </div>
-                <div id="aiResult" class="markdown-body text-xs lg:text-sm text-gray-700 dark:text-slate-300 leading-relaxed overflow-y-auto pr-1 flex-1 custom-scrollbar"><p class="text-gray-400 italic text-center py-4">分析ボタンを押して最新の助言を確認してください。</p></div>
+                <!-- 修正: 初期メッセージをAPIキーの有無に応じて切り替える -->
+                <div id="aiResult" class="markdown-body text-xs lg:text-sm text-gray-700 dark:text-slate-300 leading-relaxed overflow-y-auto pr-1 flex-1 custom-scrollbar">
+                    <p class="text-gray-400 italic text-center py-4">分析ボタンを押して最新の助言を確認してください。</p>
+                </div>
             </div>
 
-            <!-- System Status Bar -->
             <div id="statusCard" class="glass-card rounded-2xl p-3 border border-blue-100/30 dark:border-slate-700 flex-shrink-0">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
@@ -311,7 +334,7 @@
                 WARNING: { threshold: -1.0, icon: "💣", label: "警戒", bg: "rgba(254, 226, 226, 0.75)", darkBg: "rgba(153, 27, 27, 0.4)", ttBg: "rgba(252, 165, 165, 0.98)", ttDarkBg: "rgba(80, 15, 15, 0.85)", border: "#ef4444", text: "#7f1d1d", darkText: "#fecaca" },
                 CAUTION: { threshold: -0.5, icon: "⚠️", label: "注意", bg: "rgba(255, 237, 213, 0.75)", darkBg: "rgba(154, 52, 18, 0.4)", ttBg: "rgba(253, 186, 116, 0.98)", ttDarkBg: "rgba(80, 25, 10, 0.85)", border: "#f97316", text: "#7c2d12", darkText: "#fed7aa" },
                 SLIGHT:  { threshold: -0.3, icon: "🔶", label: "やや注意", bg: "rgba(254, 249, 195, 0.75)", darkBg: "rgba(133, 77, 14, 0.4)", ttBg: "rgba(254, 249, 195, 0.98)", ttDarkBg: "rgba(70, 45, 10, 0.85)", border: "#ca8a04", text: "#713f12", darkText: "#fef08a" },
-                RISE:    { threshold: 0.5,  icon: "🚀", label: "上昇警戒", bg: "rgba(219, 234, 254, 0.75)", darkBg: "rgba(30, 58, 138, 0.4)", ttBg: "rgba(191, 219, 254, 0.98)", ttDarkBg: "rgba(15, 30, 80, 0.85)", border: "#3b82f6", text: "#1e3a8a", darkText: "#bfdbfe" },
+                RISE:    { threshold: 0.5,  icon: "🚀", label: "上昇警戒", bg: "rgba(219, 234, 254, 0.75)", darkBg: "rgba(30, 58, 138, 0.4)", ttBg: "rgba(219, 234, 254, 0.98)", ttDarkBg: "rgba(15, 30, 80, 0.85)", border: "#3b82f6", text: "#1e3a8a", darkText: "#bfdbfe" },
                 DEFAULT: { icon: "", label: "", bg: "transparent", darkBg: "transparent", ttBg: "rgba(241, 245, 249, 0.98)", ttDarkBg: "rgba(15, 23, 42, 0.85)", border: "#64748b", text: "#1e293b", darkText: "#94a3b8" }
             },
             DARK_STYLE: { ZEBRA: "rgba(255, 255, 255, 0.04)" }
@@ -324,11 +347,14 @@
                 times: [], pressures: [], nowIndex: 0, chart: null, isDashboardMode: false,
                 isRefreshing: false, aiResponseMarkdown: "", isDark: false, isScroll: false,
                 tracker: { active: false, targetX: 0, targetY: 0, lastIdx: 0, curX: null, curY: null },
-                touch: { startX: 0, startTime: 0, lastX: 0, lastTime: 0, velocity: 0, scrollStart: 0, isDown: false }
+                touch: { startX: 0, startTime: 0, lastX: 0, lastTime: 0, velocity: 0, scrollStart: 0, isDown: false },
+                userApiKey: ""
             },
 
             init() {
+                this.state.userApiKey = localStorage.getItem('gemini-api-key') || "";
                 this.pwaInit(); this.initTheme(); this.ui.updateLayout(); this.ui.initGestures(); this.actions.manualRefresh();
+                this.ui.updateAiInitialMessage(); // 初期メッセージの更新
                 window.addEventListener('resize', () => { this.ui.updateLayout(); if (this.state.times.length) this.actions.render(); });
             },
 
@@ -369,10 +395,22 @@
                 async fetchWeather(lat, lon) { const res = await fetch(`${APP_CONFIG.API.WEATHER}?latitude=${lat}&longitude=${lon}&hourly=surface_pressure&past_days=3&forecast_days=3&timezone=auto`); return await res.json(); },
                 async fetchAddress(lat, lon) { const res = await fetch(`${APP_CONFIG.API.REVERSE}?latitude=${lat}&longitude=${lon}&localityLanguage=ja`); return await res.json(); },
                 async fetchCoords(name) { const res = await fetch(`${APP_CONFIG.API.GEOCODE}?name=${encodeURIComponent(name)}&count=1&language=ja&format=json`); return await res.json(); },
-                async callGemini(prompt) {
+                async callGemini(prompt, key) {
+                    if (!key) throw new Error("API_KEY_MISSING");
                     for(let i=0; i<5; i++) {
-                        try { const res = await fetch(`${APP_CONFIG.API.GEMINI}?key=${APP_CONFIG.API.KEY}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) }); const data = await res.json(); return data.candidates?.[0]?.content?.parts?.[0]?.text; }
-                        catch(e) { await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000)); }
+                        try { 
+                            const res = await fetch(`${APP_CONFIG.API.GEMINI}?key=${key}`, { 
+                                method: "POST", headers: { "Content-Type": "application/json" }, 
+                                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) 
+                            }); 
+                            const data = await res.json(); 
+                            if (data.error) throw new Error(data.error.message);
+                            return data.candidates?.[0]?.content?.parts?.[0]?.text; 
+                        }
+                        catch(e) { 
+                            if (e.message === "API_KEY_MISSING") throw e;
+                            await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000)); 
+                        }
                     }
                 }
             },
@@ -391,6 +429,28 @@
                 closeModal() { document.getElementById('searchModal').classList.remove('active'); document.getElementById('searchError').classList.add('hidden'); },
                 openExpandModal() { const modal = document.getElementById('aiExpandModal'), content = document.getElementById('aiExpandedResult'); content.innerHTML = marked.parse(App.state.aiResponseMarkdown || "最新データを分析してください。"); modal.classList.add('active'); },
                 closeExpandModal() { document.getElementById('aiExpandModal').classList.remove('active'); },
+                
+                openSettingsModal() { 
+                    const input = document.getElementById('apiKeyInput');
+                    input.value = App.state.userApiKey;
+                    document.getElementById('settingsModal').classList.add('active'); 
+                },
+                closeSettingsModal() { document.getElementById('settingsModal').classList.remove('active'); },
+                toggleApiKeyVisibility() {
+                    const input = document.getElementById('apiKeyInput');
+                    input.type = input.type === 'password' ? 'text' : 'password';
+                },
+                // 復活/新規: AIアドバイスの初期メッセージをAPIキーの有無で切り替える
+                updateAiInitialMessage() {
+                    const resArea = document.getElementById('aiResult');
+                    if (App.state.aiResponseMarkdown) return; // すでに分析結果がある場合は何もしない
+                    if (!App.state.userApiKey && !APP_CONFIG.API.KEY) {
+                        resArea.innerHTML = '<p class="text-amber-600 font-bold text-center py-4 text-xs">AI分析には Gemini API キーが必要です。<br>左上の設定ボタンから入力してください。</p>';
+                    } else {
+                        resArea.innerHTML = '<p class="text-gray-400 italic text-center py-4">分析ボタンを押して最新の助言を確認してください。</p>';
+                    }
+                },
+
                 updateLayout() {
                     const ratio = window.innerWidth / window.innerHeight;
                     const isDashboard = ratio >= APP_CONFIG.LAYOUT.ASPECT_RATIO_MIN && ratio <= APP_CONFIG.LAYOUT.ASPECT_RATIO_MAX;
@@ -415,7 +475,7 @@
                     }
                 },
                 initGestures() {
-                    const slider = document.getElementById('scrollContainer'), canvas = document.getElementById('pressureChart');
+                    const slider = document.getElementById('scrollContainer');
                     slider.onmousedown = (e) => { if (!App.state.isScroll) return; App.state.touch.isDown = true; App.state.touch.startX = e.pageX - slider.offsetLeft; App.state.touch.scrollStart = slider.scrollLeft; };
                     slider.onmouseleave = slider.onmouseup = () => App.state.touch.isDown = false;
                     slider.onmousemove = (e) => { if (!App.state.touch.isDown || !App.state.isScroll) return; slider.scrollLeft = App.state.touch.scrollStart - (e.pageX - slider.offsetLeft - App.state.touch.startX) * 1.5; };
@@ -471,6 +531,13 @@
                     document.getElementById('themeIconSun').classList.toggle('hidden', !isDark); document.getElementById('themeIconMoon').classList.toggle('hidden', isDark);
                     this.updateSummary(); if (App.state.chart) this.render();
                 },
+                saveApiKey() {
+                    const key = document.getElementById('apiKeyInput').value.trim();
+                    App.state.userApiKey = key;
+                    localStorage.setItem('gemini-api-key', key);
+                    App.ui.closeSettingsModal();
+                    App.ui.updateAiInitialMessage(); // 保存直後にメッセージを更新
+                },
                 async manualRefresh() {
                     App.ui.setLoading(true, "位置情報を取得中..."); App.state.locationResolved = false;
                     App.services.fetchIP().then(data => { if (data && !App.state.locationResolved && data.latitude) { App.state.lat = data.latitude; App.state.lon = data.longitude; App.actions.fetchWeatherData(); } });
@@ -511,10 +578,21 @@
                     el.className = `text-xl lg:text-2xl font-bold ${diff < 0 ? 'text-red-500' : (App.state.isDark ? 'text-slate-200' : 'text-blue-900')}`;
                 },
                 async consultAI() {
-                    const btn = document.getElementById('aiConsultBtn'), resArea = document.getElementById('aiResult'), expandBtn = document.getElementById('aiExpandBtn'), d = App.state.times.slice(App.state.nowIndex, App.state.nowIndex+60).map((t, i) => `${t.getHours()}時:${App.state.pressures[App.state.nowIndex+i]}hPa`).join(', ');
+                    const btn = document.getElementById('aiConsultBtn'), resArea = document.getElementById('aiResult'), expandBtn = document.getElementById('aiExpandBtn');
+                    if (!App.state.userApiKey && !APP_CONFIG.API.KEY) {
+                        resArea.innerHTML = '<div class="text-center py-2"><p class="text-amber-600 font-bold text-xs mb-2">APIキーが設定されていません</p><button onclick="App.ui.openSettingsModal()" class="bg-blue-600 text-white px-4 py-1.5 rounded-xl text-[10px] font-bold">設定を開く</button></div>';
+                        return;
+                    }
+                    const key = App.state.userApiKey || APP_CONFIG.API.KEY;
+                    const d = App.state.times.slice(App.state.nowIndex, App.state.nowIndex+60).map((t, i) => `${t.getHours()}時:${App.state.pressures[App.state.nowIndex+i]}hPa`).join(', ');
                     btn.disabled = true; resArea.innerHTML = '<div class="flex items-center gap-2 text-blue-600 font-bold"><div class="loader w-3 h-3 border-2"></div>分析中...</div>'; expandBtn.classList.add('hidden');
-                    try { const rawText = await App.services.callGemini(`気象病アドバイザーとして地点「${App.state.locationName}」の気圧予報：${d} を元に助言して。マークダウン形式を活用して。`); App.state.aiResponseMarkdown = rawText; resArea.innerHTML = marked.parse(rawText); expandBtn.classList.remove('hidden'); }
-                    catch(e) { resArea.innerHTML = '<span class="text-red-500">AI失敗</span>'; } finally { btn.disabled = false; }
+                    try { 
+                        const rawText = await App.services.callGemini(`気象病アドバイザーとして地点「${App.state.locationName}」の気圧予報：${d} を元に助言して。マークダウン形式を活用して。`, key); 
+                        App.state.aiResponseMarkdown = rawText; resArea.innerHTML = marked.parse(rawText); expandBtn.classList.remove('hidden'); 
+                    }
+                    catch(e) { 
+                        resArea.innerHTML = `<span class="text-red-500 text-xs">分析失敗: ${e.message}</span>`; 
+                    } finally { btn.disabled = false; }
                 },
                 render() {
                     App.ui.updateLayout();
@@ -566,7 +644,6 @@
                                     },
                                     borderWidth: 2, padding: 12, displayColors: false, titleFont: { weight: 'bold' }, bodyFont: { size: 20, weight: 'bold' }, 
                                     callbacks: { 
-                                        // 復活: 現在時刻との時間差表記 (+XXh / -XXh)
                                         title: (pts) => { 
                                             if(!pts[0]) return ""; 
                                             const idx = pts[0].dataIndex;
