@@ -1,19 +1,19 @@
 <!-- 
   Pressure Tracker Web App
-  Version: 21.3 (Skeleton Shimmer Fix)
-  Description: ダークモードでのローディングアニメーション修正。
+  Version: 21.4 (Tooltip Time Diff Restored)
+  Description: v21.3をベースに、ツールチップ内での現在との時間差表記を復活。
   Update: 
-    - .dark .skeleton-shimmer の background 指定を background-image に修正。
-    - background-size がリセットされる現象を防止し、ダークモードでもシマーアニメーションを有効化。
-    - v21.2 の視覚バランス（ライトモードのメモリ線濃度、0時線回避、上昇警戒色）を完全維持。
-    - スマホでの低速ツールチップ・高速スクロール、正確な時刻書式を堅持。
+    - ツールチップのタイトルに現在時刻からの差分 (+XXh / -XXh) を追加。
+    - ダークモードでのローディングアニメーション修正 (v21.3) を維持。
+    - ライトモードのメモリ線濃度 (v21.2) と 0時線回避ロジックを堅持。
+    - スマホでの低速ツールチップ・高速スクロール、クリーンアイコンを継承。
 -->
 <!DOCTYPE html>
 <html lang="ja" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>気圧トラッカー v21.3</title>
+    <title>気圧トラッカー v21.4</title>
     
     <meta name="theme-color" content="#f0f9ff">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -126,7 +126,6 @@
             background-size: 200% 100%; animation: shimmer 2s linear infinite;
             position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10;
         }
-        /* 修正：ショートハンドを使わず背景画像のみ指定することで background-size を保持 */
         .dark .skeleton-shimmer { background-image: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); }
         
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
@@ -197,7 +196,7 @@
     <div id="mainContainer" class="w-full max-w-[1800px] lg:max-w-[99%] flex flex-col mx-auto relative">
         <header id="appHeader" class="relative mb-4 lg:mb-3 text-center flex-shrink-0">
             <h1 class="text-2xl min-[1200px]:text-3xl font-bold text-blue-900 dark:text-blue-400 tracking-tight">
-                気圧トラッカー <span class="text-blue-600 dark:text-blue-300 text-sm font-medium align-middle ml-1">v21.3</span>
+                気圧トラッカー <span class="text-blue-600 dark:text-blue-300 text-sm font-medium align-middle ml-1">v21.4</span>
             </h1>
             
             <button onclick="App.actions.toggleTheme()" class="absolute right-0 top-1/2 -translate-y-1/2 p-2 rounded-full glass-card hover:bg-blue-50 dark:hover:bg-slate-700 z-10 transition-all text-blue-600 dark:text-yellow-400">
@@ -416,7 +415,7 @@
                     }
                 },
                 initGestures() {
-                    const slider = document.getElementById('scrollContainer');
+                    const slider = document.getElementById('scrollContainer'), canvas = document.getElementById('pressureChart');
                     slider.onmousedown = (e) => { if (!App.state.isScroll) return; App.state.touch.isDown = true; App.state.touch.startX = e.pageX - slider.offsetLeft; App.state.touch.scrollStart = slider.scrollLeft; };
                     slider.onmouseleave = slider.onmouseup = () => App.state.touch.isDown = false;
                     slider.onmousemove = (e) => { if (!App.state.touch.isDown || !App.state.isScroll) return; slider.scrollLeft = App.state.touch.scrollStart - (e.pageX - slider.offsetLeft - App.state.touch.startX) * 1.5; };
@@ -567,7 +566,15 @@
                                     },
                                     borderWidth: 2, padding: 12, displayColors: false, titleFont: { weight: 'bold' }, bodyFont: { size: 20, weight: 'bold' }, 
                                     callbacks: { 
-                                        title: (pts) => { if(!pts[0]) return ""; const d = App.state.times[pts[0].dataIndex]; return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:00`; }, 
+                                        // 復活: 現在時刻との時間差表記 (+XXh / -XXh)
+                                        title: (pts) => { 
+                                            if(!pts[0]) return ""; 
+                                            const idx = pts[0].dataIndex;
+                                            const d = App.state.times[idx]; 
+                                            const diff = idx - App.state.nowIndex;
+                                            const diffStr = diff > 0 ? ` (+${diff}h)` : (diff < 0 ? ` (-${Math.abs(diff)}h)` : " (NOW)");
+                                            return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:00 ${diffStr}`; 
+                                        }, 
                                         label: (pt) => `${App.utils.getZone(pt.dataIndex, App.state.pressures).icon} ${pt.parsed.y.toFixed(1)} hPa` 
                                     } 
                                 } 
