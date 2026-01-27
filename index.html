@@ -1,18 +1,19 @@
 <!-- 
   Pressure Tracker Web App
-  Version: 21.7 (Theme Sync Support)
-  Description: ダークモード時にPWAのタイトルバーや通知領域の色を同期させる機能を追加。
+  Version: 22.0 (Refresh Icon & Animation Fixed)
+  Description: 更新ボタンのアイコンをアニメーション化し、ロード中の視覚的変化を強化。
   Update: 
-    - App.actions.setTheme 内で meta[name="theme-color"] を動的に変更するロジックを追加。
-    - ライトモード時は #f0f9ff、ダークモード時は #0f172a に同期。
-    - v21.6 までの全ての視覚要素、AI設定、ジェスチャー制御を完全維持。
+    - setLoading ロジックにて、ボタン内のアイコン (#refreshIcon) に animate-spin を適用。
+    - ボタン無効化時もアイコンが正しく回転し、視認性を維持するよう調整。
+    - グラフのフェード＆ブラー、スケルトン再表示、ツールチップ透過度 0.85 を維持。
+    - v21.7 までの全機能（PWA同期、APIキー設定、時間差表記）を完全継承。
 -->
 <!DOCTYPE html>
 <html lang="ja" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>気圧トラッカー v21.7</title>
+    <title>気圧トラッカー v22.0</title>
     
     <meta name="theme-color" id="meta-theme-color" content="#f0f9ff">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -124,12 +125,19 @@
             background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
             background-size: 200% 100%; animation: shimmer 2s linear infinite;
             position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10;
+            transition: opacity 0.3s ease;
         }
         .dark .skeleton-shimmer { background-image: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); }
         
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        canvas#pressureChart { opacity: 0; transition: opacity 0.5s ease-in-out; }
+        
+        canvas#pressureChart { opacity: 0; transition: opacity 0.4s ease, filter 0.4s ease; }
         canvas#pressureChart.ready { opacity: 1; }
+        canvas#pressureChart.loading { 
+            opacity: 0.3; 
+            filter: blur(3px); 
+            pointer-events: none;
+        }
 
         .clickable-box { cursor: pointer; transition: transform 0.2s; }
         .clickable-box:active { transform: scale(0.98); }
@@ -161,6 +169,7 @@
     </div>
 
     <!-- Modals -->
+    <!-- 地点変更モーダル -->
     <div id="searchModal" class="modal-overlay" onclick="App.ui.closeModal(event)">
         <div class="modal-content glass-card p-6 rounded-3xl w-[90%] max-w-sm shadow-2xl" onclick="event.stopPropagation()">
             <h3 class="text-blue-900 dark:text-blue-400 font-bold mb-2 text-center text-lg">地点を変更</h3>
@@ -179,6 +188,7 @@
         </div>
     </div>
 
+    <!-- APIキー設定モーダル -->
     <div id="settingsModal" class="modal-overlay" onclick="App.ui.closeSettingsModal()">
         <div class="modal-content glass-card p-6 rounded-3xl w-[90%] max-w-sm shadow-2xl" onclick="event.stopPropagation()">
             <h3 class="text-blue-900 dark:text-blue-400 font-bold mb-2 text-center text-lg">API設定</h3>
@@ -199,6 +209,7 @@
         </div>
     </div>
 
+    <!-- AIアドバイス詳細モーダル -->
     <div id="aiExpandModal" class="modal-overlay" onclick="App.ui.closeExpandModal()">
         <div class="modal-content glass-modal p-6 rounded-3xl w-[95%] max-h-[85vh] shadow-2xl flex flex-col" onclick="event.stopPropagation()">
             <div class="flex items-center justify-between mb-4 flex-shrink-0 text-blue-900 dark:text-blue-400">
@@ -219,7 +230,7 @@
             </button>
 
             <h1 class="text-2xl min-[1200px]:text-3xl font-bold text-blue-900 dark:text-blue-400 tracking-tight">
-                気圧トラッカー <span class="text-blue-600 dark:text-blue-300 text-sm font-medium align-middle ml-1">v21.7</span>
+                気圧トラッカー <span class="text-blue-600 dark:text-blue-300 text-sm font-medium align-middle ml-1">v22.0</span>
             </h1>
             
             <button onclick="App.actions.toggleTheme()" class="absolute right-0 top-1/2 -translate-y-1/2 p-2 rounded-full glass-card hover:bg-blue-50 dark:hover:bg-slate-700 z-10 transition-all text-blue-600 dark:text-yellow-400" title="テーマ切り替え">
@@ -232,9 +243,10 @@
         </header>
 
         <div id="dashboardGrid" class="flex flex-col gap-4 flex-1 min-h-0 transition-all duration-300">
+            <!-- (1) Summary Info -->
             <div id="infoGrid" class="grid grid-cols-1 md:grid-cols-3 gap-3 flex-shrink-0">
                 <div onclick="App.ui.openModal()" class="info-box glass-card rounded-2xl p-3 text-center border border-blue-200 clickable-box group hover:bg-blue-50 dark:hover:bg-slate-700 transition-all">
-                    <p class="text-[10px] text-gray-400 dark:text-slate-500 font-bold mb-0.5 uppercase tracking-wider group-hover:text-blue-500 flex items-center justify-center gap-1 text-[10px]">観測地点 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></p>
+                    <p class="text-[10px] text-gray-400 dark:text-slate-500 font-bold mb-0.5 uppercase tracking-wider group-hover:text-blue-500 flex items-center justify-center gap-1">観測地点 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></p>
                     <div id="locationCoord" class="text-lg lg:text-xl font-bold text-blue-900 dark:text-slate-200 truncate">取得中...</div>
                 </div>
                 <div class="info-box glass-card rounded-2xl p-3 text-center border border-blue-100">
@@ -247,6 +259,7 @@
                 </div>
             </div>
 
+            <!-- (2) Graph Section -->
             <div id="graphCard" class="glass-card rounded-3xl overflow-hidden p-2 lg:p-4 flex-1 flex flex-col min-h-[380px] lg:min-h-0">
                 <div class="chart-view-wrapper flex-1" id="chartWrapper">
                     <div id="scrollContainer" class="scrollable-chart-container">
@@ -262,6 +275,7 @@
                 </div>
             </div>
 
+            <!-- (3) Legend Panel -->
             <div id="legendGrid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-2 flex-shrink-0">
                 <div class="rounded-xl p-2 border border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-900/20 flex items-center gap-1.5 shadow-sm">
                     <span class="text-xl dark:drop-shadow-[0_0_6px_rgba(255,255,255,0.7)]">💣</span>
@@ -281,6 +295,7 @@
                 </div>
             </div>
 
+            <!-- (4) AI Advice -->
             <div id="aiSection" class="ai-glow rounded-3xl p-4 shadow-sm border border-blue-100 flex flex-col min-h-[200px] lg:min-h-0 overflow-hidden">
                 <div class="flex items-center mb-3 flex-shrink-0">
                     <div class="flex items-center gap-2 flex-1">
@@ -294,14 +309,18 @@
                 </div>
             </div>
 
+            <!-- (5) Status Bar -->
             <div id="statusCard" class="glass-card rounded-2xl p-3 border border-blue-100/30 dark:border-slate-700 flex-shrink-0">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <div id="loadingIcon" class="loader w-5 h-5 border-[2.5px]"></div>
                         <div id="statusText" class="text-blue-900 dark:text-blue-400 text-xs lg:text-sm font-bold tracking-tight">準備中...</div>
                     </div>
-                    <button onclick="App.actions.manualRefresh()" class="bg-blue-50 dark:bg-slate-700 text-blue-600 dark:text-blue-400 hover:bg-blue-100 px-4 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 border border-blue-100 dark:border-slate-600 shadow-sm transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path></svg>
+                    <!-- 更新ボタン: アイコンに ID を付与しアニメーション可能に -->
+                    <button id="refreshBtn" onclick="App.actions.manualRefresh()" class="bg-blue-50 dark:bg-slate-700 text-blue-600 dark:text-blue-400 hover:bg-blue-100 px-4 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 border border-blue-100 dark:border-slate-600 shadow-sm transition-all disabled:opacity-70">
+                        <svg id="refreshIcon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-all duration-300">
+                            <path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+                        </svg>
                         更新
                     </button>
                 </div>
@@ -328,16 +347,16 @@
                 ASPECT_RATIO_MIN: 1.3, ASPECT_RATIO_MAX: 2.3, MOBILE_WIDTH_THRESHOLD: 768
             },
             ZONES: {
-                WARNING: { threshold: -1.0, icon: "💣", label: "警戒", bg: "rgba(254, 226, 226, 0.75)", darkBg: "rgba(153, 27, 27, 0.4)", ttBg: "rgba(252, 165, 165, 0.98)", ttDarkBg: "rgba(80, 15, 15, 0.85)", border: "#ef4444", text: "#7f1d1d", darkText: "#fecaca" },
-                CAUTION: { threshold: -0.5, icon: "⚠️", label: "注意", bg: "rgba(255, 237, 213, 0.75)", darkBg: "rgba(154, 52, 18, 0.4)", ttBg: "rgba(253, 186, 116, 0.98)", ttDarkBg: "rgba(80, 25, 10, 0.85)", border: "#f97316", text: "#7c2d12", darkText: "#fed7aa" },
-                SLIGHT:  { threshold: -0.3, icon: "🔶", label: "やや注意", bg: "rgba(254, 249, 195, 0.75)", darkBg: "rgba(133, 77, 14, 0.4)", ttBg: "rgba(254, 249, 195, 0.98)", ttDarkBg: "rgba(70, 45, 10, 0.85)", border: "#ca8a04", text: "#713f12", darkText: "#fef08a" },
-                RISE:    { threshold: 0.5,  icon: "🚀", label: "上昇警戒", bg: "rgba(219, 234, 254, 0.75)", darkBg: "rgba(30, 58, 138, 0.4)", ttBg: "rgba(219, 234, 254, 0.98)", ttDarkBg: "rgba(15, 30, 80, 0.85)", border: "#3b82f6", text: "#1e3a8a", darkText: "#bfdbfe" },
-                DEFAULT: { icon: "", label: "", bg: "transparent", darkBg: "transparent", ttBg: "rgba(241, 245, 249, 0.98)", ttDarkBg: "rgba(15, 23, 42, 0.85)", border: "#64748b", text: "#1e293b", darkText: "#94a3b8" }
+                WARNING: { threshold: -1.0, icon: "💣", label: "警戒", bg: "rgba(254, 226, 226, 0.75)", darkBg: "rgba(153, 27, 27, 0.4)", ttBg: "rgba(252, 165, 165, 0.85)", ttDarkBg: "rgba(80, 15, 15, 0.85)", border: "#ef4444", text: "#7f1d1d", darkText: "#fecaca" },
+                CAUTION: { threshold: -0.5, icon: "⚠️", label: "注意", bg: "rgba(255, 237, 213, 0.75)", darkBg: "rgba(154, 52, 18, 0.4)", ttBg: "rgba(253, 186, 116, 0.85)", ttDarkBg: "rgba(80, 25, 10, 0.85)", border: "#f97316", text: "#7c2d12", darkText: "#fed7aa" },
+                SLIGHT:  { threshold: -0.3, icon: "🔶", label: "やや注意", bg: "rgba(254, 249, 195, 0.75)", darkBg: "rgba(133, 77, 14, 0.4)", ttBg: "rgba(254, 249, 195, 0.85)", ttDarkBg: "rgba(70, 45, 10, 0.85)", border: "#ca8a04", text: "#713f12", darkText: "#fef08a" },
+                RISE:    { threshold: 0.5,  icon: "🚀", label: "上昇警戒", bg: "rgba(219, 234, 254, 0.75)", darkBg: "rgba(30, 58, 138, 0.4)", ttBg: "rgba(219, 234, 254, 0.85)", ttDarkBg: "rgba(15, 30, 80, 0.85)", border: "#3b82f6", text: "#1e3a8a", darkText: "#bfdbfe" },
+                DEFAULT: { icon: "", label: "", bg: "transparent", darkBg: "transparent", ttBg: "rgba(241, 245, 249, 0.85)", ttDarkBg: "rgba(15, 23, 42, 0.85)", border: "#64748b", text: "#1e293b", darkText: "#94a3b8" }
             },
             DARK_STYLE: { ZEBRA: "rgba(255, 255, 255, 0.04)" }
         };
 
-        /** --- II. CORE APPLICATION OBJECT --- */
+        /** --- II. APPLICATION OBJECT --- */
         const App = {
             state: {
                 lat: 35.6895, lon: 139.6917, locationName: "東京都", locationResolved: false,
@@ -414,11 +433,32 @@
 
             ui: {
                 setLoading(isLoading, msg = "") {
-                    const statusText = document.getElementById('statusText'), statusIcon = document.getElementById('loadingIcon'), skeleton = document.getElementById('chartSkeleton'), canvas = document.getElementById('pressureChart');
-                    if (statusText) statusText.innerText = msg; if (statusIcon) statusIcon.classList.toggle('hidden', !isLoading);
+                    const statusText = document.getElementById('statusText'),
+                          statusIcon = document.getElementById('loadingIcon'),
+                          refreshIcon = document.getElementById('refreshIcon'),
+                          skeleton = document.getElementById('chartSkeleton'),
+                          canvas = document.getElementById('pressureChart'),
+                          refreshBtn = document.getElementById('refreshBtn');
+
+                    if (statusText) statusText.innerText = msg;
+                    if (statusIcon) statusIcon.classList.toggle('hidden', !isLoading);
+                    if (refreshBtn) refreshBtn.disabled = isLoading;
+                    
+                    // 更新ボタン内のアイコンを回転させる
+                    if (refreshIcon) {
+                        if (isLoading) refreshIcon.classList.add('animate-spin');
+                        else refreshIcon.classList.remove('animate-spin');
+                    }
+
                     if (skeleton && canvas) { 
-                        if (isLoading && App.state.times.length === 0) { skeleton.classList.remove('hidden'); canvas.classList.remove('ready'); }
-                        else if (!isLoading) { skeleton.classList.add('hidden'); canvas.classList.add('ready'); } 
+                        if (isLoading) { 
+                            skeleton.classList.remove('hidden'); 
+                            canvas.classList.add('loading'); 
+                        } else { 
+                            skeleton.classList.add('hidden'); 
+                            canvas.classList.remove('loading');
+                            canvas.classList.add('ready'); 
+                        } 
                     }
                 },
                 updateAddressUI(name) { const el = document.getElementById('locationCoord'); el.innerText = name; const len = name.length; el.classList.remove('text-2xl', 'text-xl', 'text-lg', 'text-base'); if (len <= 6) el.classList.add('text-xl'); else if (len <= 9) el.classList.add('text-lg'); else el.classList.add('text-base'); },
@@ -528,7 +568,6 @@
                     document.getElementById('themeIconSun').classList.toggle('hidden', !isDark); 
                     document.getElementById('themeIconMoon').classList.toggle('hidden', isDark);
                     
-                    // 追加: PWAのテーマカラー同期
                     const themeColor = isDark ? '#0f172a' : '#f0f9ff';
                     const meta = document.getElementById('meta-theme-color');
                     if (meta) meta.setAttribute('content', themeColor);
