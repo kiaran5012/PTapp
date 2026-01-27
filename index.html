@@ -1,19 +1,18 @@
 <!-- 
   Pressure Tracker Web App
-  Version: 22.0 (Refresh Icon & Animation Fixed)
-  Description: 更新ボタンのアイコンをアニメーション化し、ロード中の視覚的変化を強化。
+  Version: 22.1 (Vertical Hit Area Expansion - Restored)
+  Description: v22.0をベースに、ツールチップの当たり判定のみを縦方向に拡張。
   Update: 
-    - setLoading ロジックにて、ボタン内のアイコン (#refreshIcon) に animate-spin を適用。
-    - ボタン無効化時もアイコンが正しく回転し、視認性を維持するよう調整。
-    - グラフのフェード＆ブラー、スケルトン再表示、ツールチップ透過度 0.85 を維持。
-    - v21.7 までの全機能（PWA同期、APIキー設定、時間差表記）を完全継承。
+    - interaction 設定に axis: 'x' を導入。グラフ外のラベル部分を触っても反応するように修正。
+    - v22.0 の完成された視覚効果（更新アイコン回転、グラフフェード、ブラー、スケルトン）を維持。
+    - PWAテーマ同期、APIキー個別設定、ツールチップの時間差表記 (+XXh) を完全継承。
 -->
 <!DOCTYPE html>
 <html lang="ja" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>気圧トラッカー v22.0</title>
+    <title>気圧トラッカー v22.1</title>
     
     <meta name="theme-color" id="meta-theme-color" content="#f0f9ff">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -131,12 +130,12 @@
         
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         
-        canvas#pressureChart { opacity: 0; transition: opacity 0.4s ease, filter 0.4s ease; }
+        canvas#pressureChart { opacity: 0; transition: opacity 0.4s ease, filter 0.4s ease; cursor: crosshair; }
         canvas#pressureChart.ready { opacity: 1; }
         canvas#pressureChart.loading { 
             opacity: 0.3; 
             filter: blur(3px); 
-            pointer-events: none;
+            pointer-events: none; 
         }
 
         .clickable-box { cursor: pointer; transition: transform 0.2s; }
@@ -169,7 +168,6 @@
     </div>
 
     <!-- Modals -->
-    <!-- 地点変更モーダル -->
     <div id="searchModal" class="modal-overlay" onclick="App.ui.closeModal(event)">
         <div class="modal-content glass-card p-6 rounded-3xl w-[90%] max-w-sm shadow-2xl" onclick="event.stopPropagation()">
             <h3 class="text-blue-900 dark:text-blue-400 font-bold mb-2 text-center text-lg">地点を変更</h3>
@@ -188,7 +186,6 @@
         </div>
     </div>
 
-    <!-- APIキー設定モーダル -->
     <div id="settingsModal" class="modal-overlay" onclick="App.ui.closeSettingsModal()">
         <div class="modal-content glass-card p-6 rounded-3xl w-[90%] max-w-sm shadow-2xl" onclick="event.stopPropagation()">
             <h3 class="text-blue-900 dark:text-blue-400 font-bold mb-2 text-center text-lg">API設定</h3>
@@ -209,7 +206,6 @@
         </div>
     </div>
 
-    <!-- AIアドバイス詳細モーダル -->
     <div id="aiExpandModal" class="modal-overlay" onclick="App.ui.closeExpandModal()">
         <div class="modal-content glass-modal p-6 rounded-3xl w-[95%] max-h-[85vh] shadow-2xl flex flex-col" onclick="event.stopPropagation()">
             <div class="flex items-center justify-between mb-4 flex-shrink-0 text-blue-900 dark:text-blue-400">
@@ -230,7 +226,7 @@
             </button>
 
             <h1 class="text-2xl min-[1200px]:text-3xl font-bold text-blue-900 dark:text-blue-400 tracking-tight">
-                気圧トラッカー <span class="text-blue-600 dark:text-blue-300 text-sm font-medium align-middle ml-1">v22.0</span>
+                気圧トラッカー <span class="text-blue-600 dark:text-blue-300 text-sm font-medium align-middle ml-1">v22.1</span>
             </h1>
             
             <button onclick="App.actions.toggleTheme()" class="absolute right-0 top-1/2 -translate-y-1/2 p-2 rounded-full glass-card hover:bg-blue-50 dark:hover:bg-slate-700 z-10 transition-all text-blue-600 dark:text-yellow-400" title="テーマ切り替え">
@@ -243,7 +239,6 @@
         </header>
 
         <div id="dashboardGrid" class="flex flex-col gap-4 flex-1 min-h-0 transition-all duration-300">
-            <!-- (1) Summary Info -->
             <div id="infoGrid" class="grid grid-cols-1 md:grid-cols-3 gap-3 flex-shrink-0">
                 <div onclick="App.ui.openModal()" class="info-box glass-card rounded-2xl p-3 text-center border border-blue-200 clickable-box group hover:bg-blue-50 dark:hover:bg-slate-700 transition-all">
                     <p class="text-[10px] text-gray-400 dark:text-slate-500 font-bold mb-0.5 uppercase tracking-wider group-hover:text-blue-500 flex items-center justify-center gap-1">観測地点 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></p>
@@ -259,7 +254,6 @@
                 </div>
             </div>
 
-            <!-- (2) Graph Section -->
             <div id="graphCard" class="glass-card rounded-3xl overflow-hidden p-2 lg:p-4 flex-1 flex flex-col min-h-[380px] lg:min-h-0">
                 <div class="chart-view-wrapper flex-1" id="chartWrapper">
                     <div id="scrollContainer" class="scrollable-chart-container">
@@ -275,7 +269,6 @@
                 </div>
             </div>
 
-            <!-- (3) Legend Panel -->
             <div id="legendGrid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-2 flex-shrink-0">
                 <div class="rounded-xl p-2 border border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-900/20 flex items-center gap-1.5 shadow-sm">
                     <span class="text-xl dark:drop-shadow-[0_0_6px_rgba(255,255,255,0.7)]">💣</span>
@@ -295,7 +288,7 @@
                 </div>
             </div>
 
-            <!-- (4) AI Advice -->
+            <!-- AI Advice -->
             <div id="aiSection" class="ai-glow rounded-3xl p-4 shadow-sm border border-blue-100 flex flex-col min-h-[200px] lg:min-h-0 overflow-hidden">
                 <div class="flex items-center mb-3 flex-shrink-0">
                     <div class="flex items-center gap-2 flex-1">
@@ -309,14 +302,13 @@
                 </div>
             </div>
 
-            <!-- (5) Status Bar -->
+            <!-- Status Bar -->
             <div id="statusCard" class="glass-card rounded-2xl p-3 border border-blue-100/30 dark:border-slate-700 flex-shrink-0">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <div id="loadingIcon" class="loader w-5 h-5 border-[2.5px]"></div>
                         <div id="statusText" class="text-blue-900 dark:text-blue-400 text-xs lg:text-sm font-bold tracking-tight">準備中...</div>
                     </div>
-                    <!-- 更新ボタン: アイコンに ID を付与しアニメーション可能に -->
                     <button id="refreshBtn" onclick="App.actions.manualRefresh()" class="bg-blue-50 dark:bg-slate-700 text-blue-600 dark:text-blue-400 hover:bg-blue-100 px-4 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 border border-blue-100 dark:border-slate-600 shadow-sm transition-all disabled:opacity-70">
                         <svg id="refreshIcon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-all duration-300">
                             <path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
@@ -356,7 +348,7 @@
             DARK_STYLE: { ZEBRA: "rgba(255, 255, 255, 0.04)" }
         };
 
-        /** --- II. APPLICATION OBJECT --- */
+        /** --- II. CORE APPLICATION OBJECT --- */
         const App = {
             state: {
                 lat: 35.6895, lon: 139.6917, locationName: "東京都", locationResolved: false,
@@ -444,7 +436,6 @@
                     if (statusIcon) statusIcon.classList.toggle('hidden', !isLoading);
                     if (refreshBtn) refreshBtn.disabled = isLoading;
                     
-                    // 更新ボタン内のアイコンを回転させる
                     if (refreshIcon) {
                         if (isLoading) refreshIcon.classList.add('animate-spin');
                         else refreshIcon.classList.remove('animate-spin');
@@ -466,17 +457,9 @@
                 closeModal() { document.getElementById('searchModal').classList.remove('active'); document.getElementById('searchError').classList.add('hidden'); },
                 openExpandModal() { const modal = document.getElementById('aiExpandModal'), content = document.getElementById('aiExpandedResult'); content.innerHTML = marked.parse(App.state.aiResponseMarkdown || "最新データを分析してください。"); modal.classList.add('active'); },
                 closeExpandModal() { document.getElementById('aiExpandModal').classList.remove('active'); },
-                
-                openSettingsModal() { 
-                    const input = document.getElementById('apiKeyInput');
-                    input.value = App.state.userApiKey;
-                    document.getElementById('settingsModal').classList.add('active'); 
-                },
+                openSettingsModal() { const input = document.getElementById('apiKeyInput'); input.value = App.state.userApiKey; document.getElementById('settingsModal').classList.add('active'); },
                 closeSettingsModal() { document.getElementById('settingsModal').classList.remove('active'); },
-                toggleApiKeyVisibility() {
-                    const input = document.getElementById('apiKeyInput');
-                    input.type = input.type === 'password' ? 'text' : 'password';
-                },
+                toggleApiKeyVisibility() { const input = document.getElementById('apiKeyInput'); input.type = input.type === 'password' ? 'text' : 'password'; },
                 updateAiInitialMessage() {
                     const resArea = document.getElementById('aiResult');
                     if (App.state.aiResponseMarkdown) return; 
@@ -486,14 +469,11 @@
                         resArea.innerHTML = '<p class="text-gray-400 italic text-center py-4">分析ボタンを押して最新の助言を確認してください。</p>';
                     }
                 },
-
                 updateLayout() {
                     const ratio = window.innerWidth / window.innerHeight;
                     const isDashboard = ratio >= APP_CONFIG.LAYOUT.ASPECT_RATIO_MIN && ratio <= APP_CONFIG.LAYOUT.ASPECT_RATIO_MAX;
                     App.state.isDashboardMode = isDashboard;
-                    
                     const body = document.body, container = document.getElementById('mainContainer'), grid = document.getElementById('dashboardGrid'), info = document.getElementById('infoGrid'), graph = document.getElementById('graphCard'), legend = document.getElementById('legendGrid'), ai = document.getElementById('aiSection'), status = document.getElementById('statusCard');
-                    
                     if (isDashboard) {
                         body.classList.add('mode-dashboard'); container.classList.add('h-screen', 'lg:max-h-[calc(100vh-2rem)]');
                         grid.style.display = 'grid'; grid.style.gridTemplateColumns = 'repeat(12, 1fr)'; grid.style.gridTemplateRows = 'auto auto 1fr auto'; 
@@ -511,7 +491,7 @@
                     }
                 },
                 initGestures() {
-                    const slider = document.getElementById('scrollContainer');
+                    const slider = document.getElementById('scrollContainer'), canvas = document.getElementById('pressureChart');
                     slider.onmousedown = (e) => { if (!App.state.isScroll) return; App.state.touch.isDown = true; App.state.touch.startX = e.pageX - slider.offsetLeft; App.state.touch.scrollStart = slider.scrollLeft; };
                     slider.onmouseleave = slider.onmouseup = () => App.state.touch.isDown = false;
                     slider.onmousemove = (e) => { if (!App.state.touch.isDown || !App.state.isScroll) return; slider.scrollLeft = App.state.touch.scrollStart - (e.pageX - slider.offsetLeft - App.state.touch.startX) * 1.5; };
@@ -533,7 +513,6 @@
                         const dt = now - App.state.touch.lastTime;
                         const dx = t.pageX - App.state.touch.lastX;
                         const velocity = Math.abs(dx / (dt || 1)) || 0;
-
                         App.state.touch.lastX = t.pageX;
                         App.state.touch.lastTime = now;
 
@@ -654,7 +633,9 @@
                             pointHoverRadius: 0, pointHitRadius: 10
                         }] },
                         options: {
-                            responsive: true, maintainAspectRatio: false, layout: { padding: { bottom: APP_CONFIG.LAYOUT.BOTTOM_PADDING, top: APP_CONFIG.LAYOUT.TOP_PADDING, left: APP_CONFIG.LAYOUT.SIDE_PADDING, right: APP_CONFIG.LAYOUT.SIDE_PADDING } }, interaction: { intersect: false, mode: 'index' },
+                            responsive: true, maintainAspectRatio: false, layout: { padding: { bottom: APP_CONFIG.LAYOUT.BOTTOM_PADDING, top: APP_CONFIG.LAYOUT.TOP_PADDING, left: APP_CONFIG.LAYOUT.SIDE_PADDING, right: APP_CONFIG.LAYOUT.SIDE_PADDING } }, 
+                            // 修正：interaction モードに axis: 'x' を追加し、垂直方向の距離を無視して捕捉
+                            interaction: { intersect: false, mode: 'index', axis: 'x' },
                             onHover: (e, els) => { if (els.length) { App.state.tracker.targetX = els[0].element.x; App.state.tracker.targetY = els[0].element.y; App.state.tracker.lastIdx = els[0].index; App.state.tracker.active = true; } else App.state.tracker.active = false; },
                             scales: { 
                                 x: { 
