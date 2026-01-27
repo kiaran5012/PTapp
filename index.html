@@ -1,21 +1,20 @@
 <!-- 
   Pressure Tracker Web App
-  Version: 21.6 (API Key Guidance Update)
-  Description: APIキー未設定時にAIアドバイス欄で設定を促す案内を表示。
+  Version: 21.7 (Theme Sync Support)
+  Description: ダークモード時にPWAのタイトルバーや通知領域の色を同期させる機能を追加。
   Update: 
-    - AIアドバイス欄の初期メッセージに「設定ボタンからAPIキーの入力が必要」な旨を追記。
-    - アプリ起動時にAPIキーの有無を確認し、未設定の場合は警告的な案内を優先表示。
-    - v21.5 までの視覚要素（0時線回避、メモリ線濃度、上昇警戒色、アイコン等）を完全維持。
-    - スマホでの高度ジェスチャー制御、正確な時刻書式を堅持。
+    - App.actions.setTheme 内で meta[name="theme-color"] を動的に変更するロジックを追加。
+    - ライトモード時は #f0f9ff、ダークモード時は #0f172a に同期。
+    - v21.6 までの全ての視覚要素、AI設定、ジェスチャー制御を完全維持。
 -->
 <!DOCTYPE html>
 <html lang="ja" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>気圧トラッカー v21.6</title>
+    <title>気圧トラッカー v21.7</title>
     
-    <meta name="theme-color" content="#f0f9ff">
+    <meta name="theme-color" id="meta-theme-color" content="#f0f9ff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="気圧トラッカー">
@@ -220,7 +219,7 @@
             </button>
 
             <h1 class="text-2xl min-[1200px]:text-3xl font-bold text-blue-900 dark:text-blue-400 tracking-tight">
-                気圧トラッカー <span class="text-blue-600 dark:text-blue-300 text-sm font-medium align-middle ml-1">v21.6</span>
+                気圧トラッカー <span class="text-blue-600 dark:text-blue-300 text-sm font-medium align-middle ml-1">v21.7</span>
             </h1>
             
             <button onclick="App.actions.toggleTheme()" class="absolute right-0 top-1/2 -translate-y-1/2 p-2 rounded-full glass-card hover:bg-blue-50 dark:hover:bg-slate-700 z-10 transition-all text-blue-600 dark:text-yellow-400" title="テーマ切り替え">
@@ -282,7 +281,6 @@
                 </div>
             </div>
 
-            <!-- AI Advice Panel -->
             <div id="aiSection" class="ai-glow rounded-3xl p-4 shadow-sm border border-blue-100 flex flex-col min-h-[200px] lg:min-h-0 overflow-hidden">
                 <div class="flex items-center mb-3 flex-shrink-0">
                     <div class="flex items-center gap-2 flex-1">
@@ -291,7 +289,6 @@
                     <button id="aiExpandBtn" onclick="App.ui.openExpandModal()" class="hidden mr-2 p-1.5 bg-blue-50 dark:bg-slate-700 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 transition-all shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg></button>
                     <button id="aiConsultBtn" onclick="App.actions.consultAI()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-xl transition-all text-[10px] font-bold shadow-sm disabled:opacity-50">分析</button>
                 </div>
-                <!-- 修正: 初期メッセージをAPIキーの有無に応じて切り替える -->
                 <div id="aiResult" class="markdown-body text-xs lg:text-sm text-gray-700 dark:text-slate-300 leading-relaxed overflow-y-auto pr-1 flex-1 custom-scrollbar">
                     <p class="text-gray-400 italic text-center py-4">分析ボタンを押して最新の助言を確認してください。</p>
                 </div>
@@ -354,7 +351,7 @@
             init() {
                 this.state.userApiKey = localStorage.getItem('gemini-api-key') || "";
                 this.pwaInit(); this.initTheme(); this.ui.updateLayout(); this.ui.initGestures(); this.actions.manualRefresh();
-                this.ui.updateAiInitialMessage(); // 初期メッセージの更新
+                this.ui.updateAiInitialMessage();
                 window.addEventListener('resize', () => { this.ui.updateLayout(); if (this.state.times.length) this.actions.render(); });
             },
 
@@ -440,10 +437,9 @@
                     const input = document.getElementById('apiKeyInput');
                     input.type = input.type === 'password' ? 'text' : 'password';
                 },
-                // 復活/新規: AIアドバイスの初期メッセージをAPIキーの有無で切り替える
                 updateAiInitialMessage() {
                     const resArea = document.getElementById('aiResult');
-                    if (App.state.aiResponseMarkdown) return; // すでに分析結果がある場合は何もしない
+                    if (App.state.aiResponseMarkdown) return; 
                     if (!App.state.userApiKey && !APP_CONFIG.API.KEY) {
                         resArea.innerHTML = '<p class="text-amber-600 font-bold text-center py-4 text-xs">AI分析には Gemini API キーが必要です。<br>左上の設定ボタンから入力してください。</p>';
                     } else {
@@ -527,8 +523,16 @@
                 async toggleTheme() { const next = !App.state.isDark; this.setTheme(next); localStorage.setItem('pressure-tracker-theme', next ? 'dark' : 'light'); },
                 setTheme(isDark) {
                     App.state.isDark = isDark;
-                    document.documentElement.classList.toggle('dark', isDark); document.body.classList.toggle('dark', isDark);
-                    document.getElementById('themeIconSun').classList.toggle('hidden', !isDark); document.getElementById('themeIconMoon').classList.toggle('hidden', isDark);
+                    document.documentElement.classList.toggle('dark', isDark); 
+                    document.body.classList.toggle('dark', isDark);
+                    document.getElementById('themeIconSun').classList.toggle('hidden', !isDark); 
+                    document.getElementById('themeIconMoon').classList.toggle('hidden', isDark);
+                    
+                    // 追加: PWAのテーマカラー同期
+                    const themeColor = isDark ? '#0f172a' : '#f0f9ff';
+                    const meta = document.getElementById('meta-theme-color');
+                    if (meta) meta.setAttribute('content', themeColor);
+
                     this.updateSummary(); if (App.state.chart) this.render();
                 },
                 saveApiKey() {
@@ -536,7 +540,7 @@
                     App.state.userApiKey = key;
                     localStorage.setItem('gemini-api-key', key);
                     App.ui.closeSettingsModal();
-                    App.ui.updateAiInitialMessage(); // 保存直後にメッセージを更新
+                    App.ui.updateAiInitialMessage(); 
                 },
                 async manualRefresh() {
                     App.ui.setLoading(true, "位置情報を取得中..."); App.state.locationResolved = false;
