@@ -1,17 +1,20 @@
 <!-- 
   Pressure Tracker Web App
-  Version: 22.12 (Manual Adjustment Ready)
-  Description: AIアドバイス欄の高さ調整箇所にコメントを追加。
+  Version: 22.15 (Tooltip Transparency Update)
+  Description: バックアップ(v22.12/v22.13相当)をベースに、グラフ操作ロジックのみを「上下エリア分割」に変更。
   Update: 
-    - CSS: #aiSection の min-height 設定行 (198行目付近) に手動調整用のコメントを付記。
-    - その他すべての機能・デザインは v22.10 を維持。
+    - (v22.15) ライトモード時のツールチップ背景透過度をダークモード同等(0.85)に変更。
+    - (v22.14) initGestures: 速度検知を廃止し、タッチ開始時のY座標でモード(スクロール/ツールチップ)を固定するラッチ方式へ変更。
+      - 上部(グラフ内): ツールチップ移動専用 (スクロールロック)。
+      - 下部(ラベル部): 横スクロール専用。
+    - フッター位置: 右ペイン最下部の配置を維持。
 -->
 <!DOCTYPE html>
 <html lang="ja" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>気圧トラッカー v22.12</title>
+    <title>気圧トラッカー v22.15</title>
     
     <meta name="theme-color" id="meta-theme-color" content="#f0f9ff">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -340,12 +343,12 @@
     </div>
 
     <!-- Main Container -->
-    <div id="mainContainer" class="w-full max-w-[1800px] flex flex-col mx-auto relative transition-all duration-300">
+    <div id="mainContainer" class="w-full max-w-[1800px] lg:max-w-[99%] flex flex-col mx-auto relative transition-all duration-300">
         <header id="appHeader" class="relative mb-4 lg:mb-3 text-center flex-shrink-0 flex items-center justify-between">
             <button onclick="App.ui.openSettingsModal()" class="p-2 rounded-full glass-card hover:bg-blue-50 dark:hover:bg-slate-700 z-10 transition-all text-blue-600 dark:text-slate-400" title="設定">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             </button>
-            <h1 class="text-2xl min-[1200px]:text-3xl font-bold text-blue-900 dark:text-blue-400 tracking-tight">気圧トラッカー <span class="text-blue-600 dark:text-blue-300 text-sm font-medium align-middle ml-1">v22.12</span></h1>
+            <h1 class="text-2xl min-[1200px]:text-3xl font-bold text-blue-900 dark:text-blue-400 tracking-tight">気圧トラッカー <span class="text-blue-600 dark:text-blue-300 text-sm font-medium align-middle ml-1">v22.15</span></h1>
             <button onclick="App.actions.toggleTheme()" class="p-2 rounded-full glass-card hover:bg-blue-50 dark:hover:bg-slate-700 z-10 transition-all text-blue-600 dark:text-yellow-400" title="テーマ切り替え">
                 <svg id="themeIconSun" class="hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg>
                 <svg id="themeIconMoon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -373,7 +376,7 @@
                 <!-- HUDモード専用ヘッダー -->
                 <div id="hudHeader">
                     <button onclick="App.ui.openSettingsModal()" class="p-2 glass-card rounded-full text-blue-600 dark:text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
-                    <span class="text-xs font-bold text-blue-900 dark:text-blue-400">気圧トラッカー v22.12</span>
+                    <span class="text-xs font-bold text-blue-900 dark:text-blue-400">気圧トラッカー v22.15</span>
                     <button onclick="App.actions.toggleTheme()" class="p-2 glass-card rounded-full text-blue-600 dark:text-yellow-400"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
                 </div>
 
@@ -414,16 +417,13 @@
                     <div class="flex items-center gap-3"><div id="loadingIcon" class="loader w-5 h-5 border-[2.5px]"></div><div id="statusText" class="text-blue-900 dark:text-blue-400 text-xs font-bold tracking-tight">準備中...</div></div>
                     <button id="refreshBtn" onclick="App.actions.manualRefresh()" class="bg-blue-50 dark:bg-slate-700 text-blue-600 dark:text-blue-400 hover:bg-blue-100 px-4 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 border border-blue-100 dark:border-slate-600 shadow-sm transition-all disabled:opacity-70">
                         <svg id="refreshIcon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-all duration-300">
-                            <path d="M23 4v6h-6"></path>
-                            <path d="M1 20v-6h6"></path>
-                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
-                            <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+                            <path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
                         </svg>
                         更新
                     </button>
                 </div>
                 
-                <!-- フッターをUIパネルの最後に移動 -->
+                <!-- Footer in right pane -->
                 <footer id="appFooter" class="text-center text-gray-400 dark:text-slate-600 text-[9px] py-2 flex-shrink-0">Data provided by <a href="https://open-meteo.com/" class="underline hover:text-blue-400 transition-colors" target="_blank" rel="noopener">Open-Meteo</a>.</footer>
             </div>
         </div>
@@ -446,11 +446,11 @@
                 ASPECT_RATIO_MIN: 1.3, ASPECT_RATIO_MAX: 2.3, MOBILE_WIDTH_THRESHOLD: 768, HUD_HEIGHT_THRESHOLD: 600
             },
             ZONES: {
-                WARNING: { threshold: -1.0, icon: "💣", label: "警戒", bg: "rgba(254, 226, 226, 0.75)", darkBg: "rgba(153, 27, 27, 0.4)", ttBg: "rgba(252, 165, 165, 0.98)", ttDarkBg: "rgba(80, 15, 15, 0.85)", border: "#ef4444", text: "#7f1d1d", darkText: "#fecaca" },
-                CAUTION: { threshold: -0.5, icon: "⚠️", label: "注意", bg: "rgba(255, 237, 213, 0.75)", darkBg: "rgba(154, 52, 18, 0.4)", ttBg: "rgba(253, 186, 116, 0.98)", ttDarkBg: "rgba(80, 25, 10, 0.85)", border: "#f97316", text: "#7c2d12", darkText: "#fed7aa" },
-                SLIGHT:  { threshold: -0.3, icon: "🔶", label: "やや注意", bg: "rgba(254, 249, 195, 0.75)", darkBg: "rgba(133, 77, 14, 0.4)", ttBg: "rgba(254, 249, 195, 0.98)", ttDarkBg: "rgba(70, 45, 10, 0.85)", border: "#ca8a04", text: "#713f12", darkText: "#fef08a" },
-                RISE:    { threshold: 0.5,  icon: "🚀", label: "上昇警戒", bg: "rgba(219, 234, 254, 0.75)", darkBg: "rgba(30, 58, 138, 0.4)", ttBg: "rgba(191, 219, 254, 0.98)", ttDarkBg: "rgba(15, 30, 80, 0.85)", border: "#3b82f6", text: "#1e3a8a", darkText: "#bfdbfe" },
-                DEFAULT: { icon: "", label: "", bg: "transparent", darkBg: "transparent", ttBg: "rgba(241, 245, 249, 0.98)", ttDarkBg: "rgba(15, 23, 42, 0.85)", border: "#64748b", text: "#1e293b", darkText: "#94a3b8" }
+                WARNING: { threshold: -1.0, icon: "💣", label: "警戒", bg: "rgba(254, 226, 226, 0.75)", darkBg: "rgba(153, 27, 27, 0.4)", ttBg: "rgba(252, 165, 165, 0.85)", ttDarkBg: "rgba(80, 15, 15, 0.85)", border: "#ef4444", text: "#7f1d1d", darkText: "#fecaca" },
+                CAUTION: { threshold: -0.5, icon: "⚠️", label: "注意", bg: "rgba(255, 237, 213, 0.75)", darkBg: "rgba(154, 52, 18, 0.4)", ttBg: "rgba(253, 186, 116, 0.85)", ttDarkBg: "rgba(80, 25, 10, 0.85)", border: "#f97316", text: "#7c2d12", darkText: "#fed7aa" },
+                SLIGHT:  { threshold: -0.3, icon: "🔶", label: "やや注意", bg: "rgba(254, 249, 195, 0.75)", darkBg: "rgba(133, 77, 14, 0.4)", ttBg: "rgba(254, 249, 195, 0.85)", ttDarkBg: "rgba(70, 45, 10, 0.85)", border: "#ca8a04", text: "#713f12", darkText: "#fef08a" },
+                RISE:    { threshold: 0.5,  icon: "🚀", label: "上昇警戒", bg: "rgba(219, 234, 254, 0.75)", darkBg: "rgba(30, 58, 138, 0.4)", ttBg: "rgba(191, 219, 254, 0.85)", ttDarkBg: "rgba(15, 30, 80, 0.85)", border: "#3b82f6", text: "#1e3a8a", darkText: "#bfdbfe" },
+                DEFAULT: { icon: "", label: "", bg: "transparent", darkBg: "transparent", ttBg: "rgba(241, 245, 249, 0.85)", ttDarkBg: "rgba(15, 23, 42, 0.85)", border: "#64748b", text: "#1e293b", darkText: "#94a3b8" }
             },
             DARK_STYLE: { ZEBRA: "rgba(255, 255, 255, 0.04)" }
         };
@@ -462,7 +462,7 @@
                 times: [], pressures: [], nowIndex: 0, chart: null, isDashboardMode: false,
                 isRefreshing: false, aiResponseMarkdown: "", isDark: false, isScroll: false,
                 tracker: { active: false, targetX: 0, targetY: 0, lastIdx: 0, curX: null, curY: null },
-                touch: { startX: 0, startTime: 0, lastX: 0, lastTime: 0, velocity: 0, scrollStart: 0, isDown: false },
+                touch: { startX: 0, startTime: 0, lastX: 0, lastTime: 0, velocity: 0, scrollStart: 0, isDown: false, mode: null },
                 userApiKey: ""
             },
 
@@ -535,8 +535,7 @@
                     const statusText = document.getElementById('statusText'), statusIcon = document.getElementById('loadingIcon'), skeleton = document.getElementById('chartSkeleton'), canvas = document.getElementById('pressureChart'), refreshBtn = document.getElementById('refreshBtn');
                     if (statusText) statusText.innerText = msg; if (statusIcon) statusIcon.classList.toggle('hidden', !isLoading);
                     if (refreshBtn) refreshBtn.disabled = isLoading;
-
-                    // アイコンのアニメーション制御
+                    
                     const refreshIcon = document.getElementById('refreshIcon');
                     if (refreshIcon) {
                         if (isLoading) refreshIcon.classList.add('animate-spin');
@@ -586,44 +585,73 @@
                 },
                 initGestures() {
                     const slider = document.getElementById('scrollContainer'), canvas = document.getElementById('pressureChart');
-                    slider.onmousedown = (e) => { if (!App.state.isScroll) return; App.state.touch.isDown = true; App.state.touch.startX = e.pageX - slider.offsetLeft; App.state.touch.scrollStart = slider.scrollLeft; };
-                    slider.onmouseleave = slider.onmouseup = () => App.state.touch.isDown = false;
-                    slider.onmousemove = (e) => { if (!App.state.touch.isDown || !App.state.isScroll) return; slider.scrollLeft = App.state.touch.scrollStart - (e.pageX - slider.offsetLeft - App.state.touch.startX) * 1.5; };
                     
+                    // マウス操作: 下部ラベルエリアのみドラッグスクロール可能にする
+                    slider.onmousedown = (e) => {
+                        if (!App.state.isScroll || !App.state.chart) return;
+                        const rect = canvas.getBoundingClientRect();
+                        const y = e.clientY - rect.top;
+                        
+                        // チャートエリアの下端（X軸）より下をクリックした場合のみスクロール開始
+                        if (y > App.state.chart.chartArea.bottom) {
+                            App.state.touch.isDown = true;
+                            App.state.touch.startX = e.pageX - slider.offsetLeft;
+                            App.state.touch.scrollStart = slider.scrollLeft;
+                            slider.style.cursor = 'grabbing';
+                        }
+                    };
+                    slider.onmouseleave = slider.onmouseup = () => {
+                        App.state.touch.isDown = false;
+                        slider.style.cursor = 'grab'; // デフォルトに戻す
+                    };
+                    slider.onmousemove = (e) => {
+                        if (App.state.touch.isDown) {
+                            e.preventDefault();
+                            const x = e.pageX - slider.offsetLeft;
+                            const walk = (x - App.state.touch.startX) * 1.5;
+                            slider.scrollLeft = App.state.touch.scrollStart - walk;
+                        }
+                    };
+                    
+                    // タッチ操作: 開始位置判定によるモード分岐（ラッチ方式）
                     slider.addEventListener('touchstart', (e) => { 
-                        if (!App.state.isScroll) return; 
+                        if (!App.state.isScroll || !App.state.chart) return;
                         const t = e.touches[0];
+                        const rect = canvas.getBoundingClientRect();
+                        const y = t.clientY - rect.top;
+                        
                         App.state.touch.startX = t.pageX;
-                        App.state.touch.startTime = Date.now();
-                        App.state.touch.lastX = t.pageX;
-                        App.state.touch.lastTime = Date.now();
                         App.state.touch.scrollStart = slider.scrollLeft;
-                    }, { passive: true });
-
-                    slider.addEventListener('touchmove', (e) => {
-                        if (!App.state.isScroll) return;
-                        const t = e.touches[0];
-                        const now = Date.now();
-                        const dt = now - App.state.touch.lastTime;
-                        const dx = t.pageX - App.state.touch.lastX;
-                        const velocity = Math.abs(dx / (dt || 1)) || 0;
-                        App.state.touch.lastX = t.pageX;
-                        App.state.touch.lastTime = now;
-
-                        // 修正：スクロールかツールチップかの判定。axis: 'x' を入れているので、グラフエリア内ならツールチップ、そうでなければスクロール
-                        // しかし、標準のtouchmoveではブラウザスクロールが優先されることがあるため、ここで制御
-                        if (velocity < APP_CONFIG.LAYOUT.SCROLL_VELOCITY_THRESHOLD) {
-                            if (App.state.chart) {
-                                App.state.chart.canvas.dispatchEvent(new MouseEvent('mousemove', {
-                                    clientX: t.clientX, clientY: t.clientY, bubbles: true
-                                }));
-                            }
-                            if (e.cancelable) e.preventDefault(); 
+                        
+                        // Y座標判定: グラフの下端より下ならスクロールモード、そうでなければツールチップモード
+                        if (y > App.state.chart.chartArea.bottom) {
+                            App.state.touch.mode = 'scroll';
                         } else {
-                            slider.scrollLeft = App.state.touch.scrollStart - (t.pageX - App.state.touch.startX);
+                            App.state.touch.mode = 'tooltip';
                         }
                     }, { passive: false });
 
+                    slider.addEventListener('touchmove', (e) => {
+                        if (!App.state.isScroll || !App.state.touch.mode) return;
+                        const t = e.touches[0];
+
+                        if (App.state.touch.mode === 'scroll') {
+                            // スクロールモード: 横スクロールを実行
+                            const x = t.pageX;
+                            const walk = (x - App.state.touch.startX); // 感度1:1
+                            slider.scrollLeft = App.state.touch.scrollStart - walk;
+                            if (e.cancelable) e.preventDefault(); // 画面全体のスクロールを防ぐ
+                        } else if (App.state.touch.mode === 'tooltip') {
+                            // ツールチップモード: Chart.jsにホバーイベントを送る
+                            App.state.chart.canvas.dispatchEvent(new MouseEvent('mousemove', {
+                                clientX: t.clientX, clientY: t.clientY, bubbles: true
+                            }));
+                            // ツールチップ操作中は画面スクロールを防ぐ（お好みで調整）
+                            if (e.cancelable) e.preventDefault();
+                        }
+                    }, { passive: false });
+
+                    slider.addEventListener('touchend', () => { App.state.touch.mode = null; });
                     slider.addEventListener('scroll', () => { if(App.state.chart) App.state.chart.draw(); });
 
                     let ptrStart = 0;
@@ -642,11 +670,9 @@
                     document.body.classList.toggle('dark', isDark);
                     document.getElementById('themeIconSun').classList.toggle('hidden', !isDark); 
                     document.getElementById('themeIconMoon').classList.toggle('hidden', isDark);
-                    
                     const themeColor = isDark ? '#0f172a' : '#f0f9ff';
                     const meta = document.getElementById('meta-theme-color');
                     if (meta) meta.setAttribute('content', themeColor);
-
                     this.updateSummary(); if (App.state.chart) this.render();
                 },
                 saveApiKey() {
@@ -778,7 +804,13 @@
                             }
                         }, plugins: [ App.chartPlugins.bg, App.chartPlugins.zones, App.chartPlugins.footer, App.chartPlugins.hover, App.chartPlugins.now ]
                     });
-                    if (App.state.isScroll) { const px = (wrap.clientWidth - hPad) / APP_CONFIG.LAYOUT.VISIBLE_HOURS; slider.scrollLeft = (App.state.nowIndex * px) + APP_CONFIG.LAYOUT.SIDE_PADDING - (slider.offsetWidth / 2); }
+                    
+                    // 追加: sliderの定義と初期化を render 内で確実に行う
+                    const slider = document.getElementById('scrollContainer'); 
+                    if (App.state.isScroll) { 
+                        const px = (wrap.clientWidth - hPad) / APP_CONFIG.LAYOUT.VISIBLE_HOURS; 
+                        slider.scrollLeft = (App.state.nowIndex * px) + APP_CONFIG.LAYOUT.SIDE_PADDING - (slider.offsetWidth / 2); 
+                    }
                 }
             },
 
