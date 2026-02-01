@@ -1,20 +1,18 @@
 <!-- 
   Pressure Tracker Web App
-  Version: 22.15 (Tooltip Transparency Update)
+  Version: 22.16 (System Theme Priority)
   Description: バックアップ(v22.12/v22.13相当)をベースに、グラフ操作ロジックのみを「上下エリア分割」に変更。
   Update: 
+    - (v22.16) テーマ設定ロジック変更: localStorageへの保存を廃止。常に機種(OS)の設定を初期値とし、OS設定の変更にも自動追従するように変更。手動切替は一時的なものとする。
     - (v22.15) ライトモード時のツールチップ背景透過度をダークモード同等(0.85)に変更。
     - (v22.14) initGestures: 速度検知を廃止し、タッチ開始時のY座標でモード(スクロール/ツールチップ)を固定するラッチ方式へ変更。
-      - 上部(グラフ内): ツールチップ移動専用 (スクロールロック)。
-      - 下部(ラベル部): 横スクロール専用。
-    - フッター位置: 右ペイン最下部の配置を維持。
 -->
 <!DOCTYPE html>
 <html lang="ja" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>気圧トラッカー v22.15</title>
+    <title>気圧トラッカー v22.16</title>
     
     <meta name="theme-color" id="meta-theme-color" content="#f0f9ff">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -348,7 +346,7 @@
             <button onclick="App.ui.openSettingsModal()" class="p-2 rounded-full glass-card hover:bg-blue-50 dark:hover:bg-slate-700 z-10 transition-all text-blue-600 dark:text-slate-400" title="設定">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             </button>
-            <h1 class="text-2xl min-[1200px]:text-3xl font-bold text-blue-900 dark:text-blue-400 tracking-tight">気圧トラッカー <span class="text-blue-600 dark:text-blue-300 text-sm font-medium align-middle ml-1">v22.15</span></h1>
+            <h1 class="text-2xl min-[1200px]:text-3xl font-bold text-blue-900 dark:text-blue-400 tracking-tight">気圧トラッカー <span class="text-blue-600 dark:text-blue-300 text-sm font-medium align-middle ml-1">v22.16</span></h1>
             <button onclick="App.actions.toggleTheme()" class="p-2 rounded-full glass-card hover:bg-blue-50 dark:hover:bg-slate-700 z-10 transition-all text-blue-600 dark:text-yellow-400" title="テーマ切り替え">
                 <svg id="themeIconSun" class="hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg>
                 <svg id="themeIconMoon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -376,7 +374,7 @@
                 <!-- HUDモード専用ヘッダー -->
                 <div id="hudHeader">
                     <button onclick="App.ui.openSettingsModal()" class="p-2 glass-card rounded-full text-blue-600 dark:text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
-                    <span class="text-xs font-bold text-blue-900 dark:text-blue-400">気圧トラッカー v22.15</span>
+                    <span class="text-xs font-bold text-blue-900 dark:text-blue-400">気圧トラッカー v22.16</span>
                     <button onclick="App.actions.toggleTheme()" class="p-2 glass-card rounded-full text-blue-600 dark:text-yellow-400"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
                 </div>
 
@@ -479,10 +477,17 @@
             },
 
             initTheme() {
-                const saved = localStorage.getItem('pressure-tracker-theme');
+                // v22.16: localStorageの使用を廃止し、常にシステム設定（機種設定）を優先して初期化
                 const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (saved === 'dark' || (!saved && systemDark)) this.actions.setTheme(true);
-                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => { if (!localStorage.getItem('pressure-tracker-theme')) this.actions.setTheme(e.matches); });
+                
+                // システムがダークならダークモード適用（デフォルトはライト前提のCSS構成のため）
+                // ※setThemeを呼ぶことでアイコンの整合性なども初期化する
+                this.actions.setTheme(systemDark);
+
+                // システム設定の変更を常時監視して反映（手動設定よりも優先）
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => { 
+                    this.actions.setTheme(e.matches); 
+                });
             },
 
             utils: {
@@ -663,7 +668,11 @@
             },
 
             actions: {
-                async toggleTheme() { const next = !App.state.isDark; this.setTheme(next); localStorage.setItem('pressure-tracker-theme', next ? 'dark' : 'light'); },
+                async toggleTheme() { 
+                    const next = !App.state.isDark; 
+                    this.setTheme(next); 
+                    // v22.16: テーマの手動設定を保存しない（次回起動時はシステム設定に従う）
+                },
                 setTheme(isDark) {
                     App.state.isDark = isDark;
                     document.documentElement.classList.toggle('dark', isDark); 
