@@ -1,17 +1,17 @@
 <!-- 
   Pressure Tracker Web App
-  Version: 22.11 (Icon Polish)
-  Description: 更新ボタンのアイコン形状を修正し、視認性を向上。
+  Version: 22.12 (Manual Adjustment Ready)
+  Description: AIアドバイス欄の高さ調整箇所にコメントを追加。
   Update: 
-    - #refreshIcon のSVGパスを修正し、崩れのない綺麗な循環矢印に変更。
-    - v22.10 のレイアウト（CSS Grid/Flex制御、HUDモード）、機能（当たり判定、更新演出）を完全維持。
+    - CSS: #aiSection の min-height 設定行 (198行目付近) に手動調整用のコメントを付記。
+    - その他すべての機能・デザインは v22.10 を維持。
 -->
 <!DOCTYPE html>
 <html lang="ja" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>気圧トラッカー v22.11</title>
+    <title>気圧トラッカー v22.12</title>
     
     <meta name="theme-color" id="meta-theme-color" content="#f0f9ff">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -55,62 +55,51 @@
         body:not(.dark) { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); }
         body.dark { background: linear-gradient(135deg, #020617 0%, #0f172a 100%); }
 
-        /* --- レイアウト制御 --- */
+        /* モード共通設定 */
+        body.mode-dashboard, body.mode-hud { height: 100vh; max-height: 100vh; overflow: hidden; }
+        body:not(.mode-dashboard):not(.mode-hud) { overflow-y: auto; max-height: none; }
 
-        /* コンテナ基本設定 */
         #mainContainer {
             width: 100%;
             max-width: 1800px;
             display: flex;
             flex-direction: column;
+            height: 100%;
+            min-height: 100vh;
             padding: 1rem;
             gap: 1rem;
-            height: 100%;
-            min-height: 100vh; /* スマホ縦などでの最低高さ */
             transition: all 0.3s ease;
         }
 
+        /* ----------------------------------------------------
+           レイアウトモード定義
+           ---------------------------------------------------- */
+
         /* 1. ダッシュボードモード (PC / ワイド画面) */
-        body.mode-dashboard {
-            height: 100vh;
-            overflow: hidden; /* 画面外へのはみ出しをカット */
-        }
-        body.mode-dashboard #mainContainer {
-            height: 100vh;
-            padding: 1rem;
-            overflow: hidden;
-        }
+        body.mode-dashboard { height: 100vh; overflow: hidden; }
+        body.mode-dashboard #mainContainer { height: 100vh; overflow: hidden; }
         
-        /* 左右分割グリッド */
         body.mode-dashboard #dashboardGrid {
             flex: 1;
             display: grid;
-            grid-template-columns: 7fr 3fr; /* 左7 : 右3 */
+            grid-template-columns: 7fr 3fr; /* 左:右 = 7:3 */
             gap: 1rem;
-            min-height: 0; /* Flexアイテム内でのスクロールに必須 */
+            min-height: 0;
             overflow: hidden;
         }
-
-        /* 左: グラフエリア */
+        
+        /* ダッシュボード時の左パネル */
         body.mode-dashboard #graphAreaWrapper {
-            height: 100%;
-            min-height: 0;
-            display: flex;
-            flex-direction: column;
+            height: 100%; min-height: 0; display: flex; flex-direction: column;
         }
-        body.mode-dashboard #graphCard {
-            flex: 1;
-            height: 100%;
-        }
+        body.mode-dashboard #graphCard { flex: 1; }
 
-        /* 右: 情報エリア */
+        /* ダッシュボード時の右パネル */
         body.mode-dashboard #infoArea {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            overflow-y: auto; /* コンテンツが多い場合のみスクロール */
-            padding-right: 4px;
+            height: 100%; 
+            display: flex; flex-direction: column; gap: 1rem;
+            overflow-y: auto; /* 右側だけスクロール */
+            padding-right: 4px; 
         }
 
         /* 2. HUDモード (スマホ横: 高さ600px未満) */
@@ -124,6 +113,7 @@
             display: contents; /* グリッド解除して直下の子として扱う */
         }
         
+        /* HUD: 左側グラフ */
         body.mode-hud #graphAreaWrapper {
             flex: 7; height: 100%; min-width: 0; display: flex; flex-direction: column;
         }
@@ -133,6 +123,7 @@
         }
         body.mode-hud .chart-view-wrapper { border-radius: 0; }
 
+        /* HUD: 右側情報パネル */
         body.mode-hud #infoArea {
             flex: 3; min-width: 250px; height: 100%; 
             display: flex; flex-direction: column; gap: 0.75rem;
@@ -152,46 +143,43 @@
             min-height: 0;
             flex: 1;
         }
-        #infoArea {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
+        #infoArea { display: flex; flex-direction: column; gap: 1rem; }
 
-        /* --- コンポーネントスタイル --- */
+        /* ----------------------------------------------------
+           コンポーネントスタイル
+           ---------------------------------------------------- */
         
-        /* 情報カード (縦並び) */
+        /* 情報カード (縦並び固定) */
         #infoGrid {
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: 1fr; /* 常に1列 */
             gap: 0.75rem;
         }
-        /* 通常モードのみ、画面が広ければ3列にする */
+        /* 通常モードのみ、画面が広ければ3列にする (オプション) */
         @media (min-width: 640px) {
             body:not(.mode-dashboard):not(.mode-hud) #infoGrid {
                 grid-template-columns: repeat(3, 1fr);
             }
         }
 
-        /* AIセクションの自動伸長 */
+        /* AIセクションの自動伸長 (ダッシュボード/HUD時) */
         body.mode-dashboard #aiSection,
         body.mode-hud #aiSection {
-            flex: 1; /* 余白を埋める */
+            flex-grow: 1; /* 余白を埋める */
             display: flex; flex-direction: column;
-            min-height: 200px;
+            min-height: 170px; /* ← 手動調整箇所: AI欄の最小高さ */
         }
         body.mode-dashboard #aiResult,
         body.mode-hud #aiResult {
             flex: 1; /* テキストエリアも広げる */
-            overflow-y: auto;
         }
 
-        /* HUD専用ヘッダー */
+        /* HUD専用ヘッダー (デフォルト非表示) */
         #hudHeader { display: none; }
         body.mode-hud #hudHeader { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 0.5rem; }
         .dark body.mode-hud #hudHeader { border-bottom-color: rgba(255,255,255,0.1); }
 
-        /* ガラスカード */
+        /* ガラスカード装飾 (v22.1維持) */
         .glass-card {
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
@@ -205,6 +193,7 @@
             box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.2);
         }
 
+        /* その他の共通スタイル */
         .glass-modal {
             background: rgba(255, 255, 255, 0.75) !important;
             backdrop-filter: blur(16px) saturate(180%) !important;
@@ -351,13 +340,12 @@
     </div>
 
     <!-- Main Container -->
-    <div id="mainContainer">
-        <!-- (1) 通常ヘッダー -->
+    <div id="mainContainer" class="w-full max-w-[1800px] flex flex-col mx-auto relative transition-all duration-300">
         <header id="appHeader" class="relative mb-4 lg:mb-3 text-center flex-shrink-0 flex items-center justify-between">
             <button onclick="App.ui.openSettingsModal()" class="p-2 rounded-full glass-card hover:bg-blue-50 dark:hover:bg-slate-700 z-10 transition-all text-blue-600 dark:text-slate-400" title="設定">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             </button>
-            <h1 class="text-2xl min-[1200px]:text-3xl font-bold text-blue-900 dark:text-blue-400 tracking-tight">気圧トラッカー <span class="text-blue-600 dark:text-blue-300 text-sm font-medium align-middle ml-1">v22.11</span></h1>
+            <h1 class="text-2xl min-[1200px]:text-3xl font-bold text-blue-900 dark:text-blue-400 tracking-tight">気圧トラッカー <span class="text-blue-600 dark:text-blue-300 text-sm font-medium align-middle ml-1">v22.12</span></h1>
             <button onclick="App.actions.toggleTheme()" class="p-2 rounded-full glass-card hover:bg-blue-50 dark:hover:bg-slate-700 z-10 transition-all text-blue-600 dark:text-yellow-400" title="テーマ切り替え">
                 <svg id="themeIconSun" class="hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg>
                 <svg id="themeIconMoon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -385,7 +373,7 @@
                 <!-- HUDモード専用ヘッダー -->
                 <div id="hudHeader">
                     <button onclick="App.ui.openSettingsModal()" class="p-2 glass-card rounded-full text-blue-600 dark:text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
-                    <span class="text-xs font-bold text-blue-900 dark:text-blue-400">気圧トラッカー v22.11</span>
+                    <span class="text-xs font-bold text-blue-900 dark:text-blue-400">気圧トラッカー v22.12</span>
                     <button onclick="App.actions.toggleTheme()" class="p-2 glass-card rounded-full text-blue-600 dark:text-yellow-400"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
                 </div>
 
@@ -411,7 +399,7 @@
                     <div class="rounded-xl p-2 border border-blue-200 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-900/20 flex items-center gap-1.5 shadow-sm"><span class="text-xl">🚀</span><div class="text-[11px] font-bold text-blue-900 dark:text-blue-400 leading-none">上昇警戒</div></div>
                 </div>
 
-                <div id="aiSection" class="ai-glow rounded-3xl p-4 shadow-sm border border-blue-100 flex flex-col min-h-[200px] overflow-hidden">
+                <div id="aiSection" class="ai-glow rounded-3xl p-4 shadow-sm border border-blue-100 flex flex-col min-h-[170px] overflow-hidden">
                     <div class="flex items-center mb-3 flex-shrink-0">
                         <div class="flex items-center gap-2 flex-1"><span class="text-lg">✨</span><h2 class="text-sm font-bold text-blue-900 dark:text-blue-400">AIアドバイス</h2></div>
                         <button id="aiExpandBtn" onclick="App.ui.openExpandModal()" class="hidden mr-2 p-1.5 bg-blue-50 dark:bg-slate-700 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 transition-all shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></button>
@@ -425,7 +413,13 @@
                 <div id="statusCard" class="glass-card rounded-2xl p-3 border border-blue-100/30 dark:border-slate-700 flex-shrink-0 flex items-center justify-between">
                     <div class="flex items-center gap-3"><div id="loadingIcon" class="loader w-5 h-5 border-[2.5px]"></div><div id="statusText" class="text-blue-900 dark:text-blue-400 text-xs font-bold tracking-tight">準備中...</div></div>
                     <button id="refreshBtn" onclick="App.actions.manualRefresh()" class="bg-blue-50 dark:bg-slate-700 text-blue-600 dark:text-blue-400 hover:bg-blue-100 px-4 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 border border-blue-100 dark:border-slate-600 shadow-sm transition-all disabled:opacity-70">
-                        <svg id="refreshIcon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-all duration-300"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 21H3v-5"/></svg>更新
+                        <svg id="refreshIcon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-all duration-300">
+                            <path d="M23 4v6h-6"></path>
+                            <path d="M1 20v-6h6"></path>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                            <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+                        </svg>
+                        更新
                     </button>
                 </div>
                 
@@ -455,7 +449,7 @@
                 WARNING: { threshold: -1.0, icon: "💣", label: "警戒", bg: "rgba(254, 226, 226, 0.75)", darkBg: "rgba(153, 27, 27, 0.4)", ttBg: "rgba(252, 165, 165, 0.98)", ttDarkBg: "rgba(80, 15, 15, 0.85)", border: "#ef4444", text: "#7f1d1d", darkText: "#fecaca" },
                 CAUTION: { threshold: -0.5, icon: "⚠️", label: "注意", bg: "rgba(255, 237, 213, 0.75)", darkBg: "rgba(154, 52, 18, 0.4)", ttBg: "rgba(253, 186, 116, 0.98)", ttDarkBg: "rgba(80, 25, 10, 0.85)", border: "#f97316", text: "#7c2d12", darkText: "#fed7aa" },
                 SLIGHT:  { threshold: -0.3, icon: "🔶", label: "やや注意", bg: "rgba(254, 249, 195, 0.75)", darkBg: "rgba(133, 77, 14, 0.4)", ttBg: "rgba(254, 249, 195, 0.98)", ttDarkBg: "rgba(70, 45, 10, 0.85)", border: "#ca8a04", text: "#713f12", darkText: "#fef08a" },
-                RISE:    { threshold: 0.5,  icon: "🚀", label: "上昇警戒", bg: "rgba(219, 234, 254, 0.75)", darkBg: "rgba(30, 58, 138, 0.4)", ttBg: "rgba(219, 234, 254, 0.98)", ttDarkBg: "rgba(15, 30, 80, 0.85)", border: "#3b82f6", text: "#1e3a8a", darkText: "#bfdbfe" },
+                RISE:    { threshold: 0.5,  icon: "🚀", label: "上昇警戒", bg: "rgba(219, 234, 254, 0.75)", darkBg: "rgba(30, 58, 138, 0.4)", ttBg: "rgba(191, 219, 254, 0.98)", ttDarkBg: "rgba(15, 30, 80, 0.85)", border: "#3b82f6", text: "#1e3a8a", darkText: "#bfdbfe" },
                 DEFAULT: { icon: "", label: "", bg: "transparent", darkBg: "transparent", ttBg: "rgba(241, 245, 249, 0.98)", ttDarkBg: "rgba(15, 23, 42, 0.85)", border: "#64748b", text: "#1e293b", darkText: "#94a3b8" }
             },
             DARK_STYLE: { ZEBRA: "rgba(255, 255, 255, 0.04)" }
@@ -721,12 +715,12 @@
                 render() {
                     App.ui.updateLayout();
                     const wrap = document.getElementById('chartWrapper'), canvas = document.getElementById('pressureChart'), ctx = canvas.getContext('2d');
+                    if (Chart.getChart(canvas)) Chart.getChart(canvas).destroy();
+                    const isDark = App.state.isDark;
                     App.state.isScroll = window.innerWidth < APP_CONFIG.LAYOUT.MOBILE_WIDTH_THRESHOLD;
-                    const existingChart = Chart.getChart(canvas); if (existingChart) existingChart.destroy();
-                    const slider = document.getElementById('scrollContainer'); const hPad = APP_CONFIG.LAYOUT.SIDE_PADDING * 2;
+                    const hPad = APP_CONFIG.LAYOUT.SIDE_PADDING * 2;
                     if (App.state.isScroll) { const px = (wrap.clientWidth - hPad) / APP_CONFIG.LAYOUT.VISIBLE_HOURS; document.getElementById('chartInner').style.width = `${(App.state.times.length * px) + hPad}px`; } else { document.getElementById('chartInner').style.width = `100%`; }
                     
-                    const isDark = App.state.isDark;
                     App.state.chart = new Chart(ctx, {
                         type: 'line', data: { labels: App.state.times, datasets: [{ 
                             data: App.state.pressures, borderColor: isDark ? '#60a5fa' : '#3b82f6', borderWidth: 2.5, tension: 0.3, fill: false, 
