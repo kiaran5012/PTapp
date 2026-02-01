@@ -1,2 +1,4 @@
-# PTapp
-PresureTrackerApp
+# 気圧トラッカー
+このアプリは、気圧の変化をグラフで可視化し、気象病（頭痛やめまいなど）の対策をサポートするWebアプリケーションです。
+PC・タブレット・スマホでの仕様を想定しています。
+https://kiaran5012.github.io/PTapp/
